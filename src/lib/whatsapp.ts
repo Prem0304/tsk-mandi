@@ -1,0 +1,154 @@
+// ============================================================================
+// WHATSAPP INTEGRATION SERVICE (WA.ME DEEP LINKS - NO PAID API REQUIRED)
+// English & Tamil templates for bills, passbooks, payment & crate reminders
+// ============================================================================
+
+import { formatDate, formatINR } from './utils';
+import { Sale, Customer, AppSettings } from '../types';
+
+/**
+ * Clean phone number to Indian 10 or 12 digits (e.g. 919876543210)
+ */
+export function formatWhatsAppPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `91${digits}`;
+  }
+  return digits;
+}
+
+/**
+ * Open WhatsApp wa.me link in new tab
+ */
+export function openWhatsAppLink(phone: string, message: string) {
+  const cleanPhone = formatWhatsAppPhone(phone);
+  const encodedText = encodeURIComponent(message);
+  const url = `https://wa.me/${cleanPhone}?text=${encodedText}`;
+  window.open(url, '_blank');
+}
+
+/**
+ * WhatsApp Share for Sale Bill
+ */
+export function shareSaleBillWhatsApp(
+  sale: Sale,
+  customer: Customer,
+  settings: AppSettings,
+  language: 'en' | 'ta',
+  previousBalance: number,
+  cratesHeld: Record<string, number>
+) {
+  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
+  const newBalance = previousBalance + sale.billTotal - sale.amountReceivedNow;
+  const bigPending = cratesHeld['big'] || 0;
+  const smallPending = cratesHeld['small'] || 0;
+
+  let message = '';
+  if (language === 'ta') {
+    message = `*${shopName}*\n` +
+      `வணக்கம் ${customer.name},\n` +
+      `விற்பனை பில்: *${sale.billNo}* (${formatDate(sale.saleDate)})\n\n` +
+      `பில் தொகை: *${formatINR(sale.billTotal)}*\n` +
+      `இப்போது பெற்ற தொகை: *${formatINR(sale.amountReceivedNow)}*\n` +
+      `தற்போதைய மொத்த பாக்கி: *${formatINR(newBalance)}*\n` +
+      `நிலுவையில் உள்ள பெட்டிகள்: *பெரியது: ${bigPending}, சிறியது: ${smallPending}*\n\n` +
+      `UPI மூலம் செலுத்த: ${settings.upiId}\n\n` +
+      `${settings.billFooterTa || 'உங்கள் வணிகத்திற்கு நன்றி!'}`;
+  } else {
+    message = `*${shopName}*\n` +
+      `Dear ${customer.name},\n` +
+      `Sale Bill: *${sale.billNo}* (${formatDate(sale.saleDate)})\n\n` +
+      `Bill Amount: *${formatINR(sale.billTotal)}*\n` +
+      `Amount Paid Now: *${formatINR(sale.amountReceivedNow)}*\n` +
+      `Total Balance Due: *${formatINR(newBalance)}*\n` +
+      `Crates Pending With You: *Big: ${bigPending}, Small: ${smallPending}*\n\n` +
+      `Pay via UPI: ${settings.upiId}\n\n` +
+      `${settings.billFooter || 'Thank you for your business!'}`;
+  }
+
+  openWhatsAppLink(customer.phone, message);
+}
+
+/**
+ * WhatsApp Share for Customer Passbook & Balance Reminder (Section 9)
+ */
+export function sharePassbookReminderWhatsApp(
+  customer: Customer,
+  balance: number,
+  cratesHeld: Record<string, number>,
+  settings: AppSettings,
+  language: 'en' | 'ta'
+) {
+  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
+  const today = formatDate(new Date());
+  const big = cratesHeld['big'] || 0;
+  const small = cratesHeld['small'] || 0;
+
+  let message = '';
+  if (language === 'ta') {
+    message = `வணக்கம் ${customer.name}, ${today} அன்றைய நிலவரப்படி ${shopName}-ல் உங்கள் நிலுவை பாக்கி *${formatINR(balance)}*. நிலுவையில் உள்ள பெட்டிகள்: *பெரியது ${big}, சிறியது ${small}*. நன்றி.`;
+  } else {
+    message = `Dear ${customer.name}, your balance with ${shopName} as on ${today} is *${formatINR(balance)}*. Crates pending: *Big ${big}, Small ${small}*. Thank you.`;
+  }
+
+  openWhatsAppLink(customer.phone, message);
+}
+
+/**
+ * WhatsApp Share for Crate Defaulters (Section 10.5)
+ */
+export function shareCrateReminderWhatsApp(
+  customer: Customer,
+  cratesHeld: Record<string, number>,
+  settings: AppSettings,
+  language: 'en' | 'ta'
+) {
+  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
+  const big = cratesHeld['big'] || 0;
+  const small = cratesHeld['small'] || 0;
+
+  let message = '';
+  if (language === 'ta') {
+    message = `வணக்கம் ${customer.name}, தங்களிடம் ${shopName}-ன் *${big} பெரிய பெட்டிகள்* மற்றும் *${small} சிறிய பெட்டிகள்* நிலுவையில் உள்ளன. தயவுசெய்து உடனடியாக திருப்பித் தரவும்.`;
+  } else {
+    message = `Dear ${customer.name}, you have *${big} Big* and *${small} Small* crates pending with ${shopName}. Kindly return.`;
+  }
+
+  openWhatsAppLink(customer.phone, message);
+}
+
+/**
+ * WhatsApp Daily End-Of-Day Summary for Owner (Section 15)
+ */
+export function shareDailyOwnerSummaryWhatsApp(
+  settings: AppSettings,
+  dateStr: string,
+  summary: {
+    totalSales: number;
+    totalCollections: number;
+    totalPurchases: number;
+    totalPaidSuppliers: number;
+    totalExpenses: number;
+    totalReceivables: number;
+    moneyInHandForSuppliers: number;
+    bookedProfit: number;
+    realisedProfit: number;
+    cratesWithCustomers: { big: number; small: number };
+  }
+) {
+  const formattedDate = formatDate(dateStr);
+  const msg = `📊 *${settings.shopName}* - End of Day Summary (${formattedDate})\n\n` +
+    `🛒 *Sales Today:* ${formatINR(summary.totalSales)}\n` +
+    `💰 *Collections Today:* ${formatINR(summary.totalCollections)}\n` +
+    `🚚 *Purchases Today:* ${formatINR(summary.totalPurchases)}\n` +
+    `🤝 *Paid to Suppliers:* ${formatINR(summary.totalPaidSuppliers)}\n` +
+    `💸 *Expenses Today:* ${formatINR(summary.totalExpenses)}\n\n` +
+    `📈 *Booked Profit:* ${formatINR(summary.bookedProfit)}\n` +
+    `💵 *Realised Profit:* ${formatINR(summary.realisedProfit)}\n\n` +
+    `📌 *Total Receivables:* ${formatINR(summary.totalReceivables)}\n` +
+    `💼 *Money in Hand for Suppliers:* ${formatINR(summary.moneyInHandForSuppliers)}\n` +
+    `📦 *Crates with Customers:* Big ${summary.cratesWithCustomers.big}, Small ${summary.cratesWithCustomers.small}\n\n` +
+    `Generated by TSK Mandi System.`;
+
+  openWhatsAppLink(settings.phone, msg);
+}

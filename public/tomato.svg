@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="55" r="42" fill="#D7263D" />
+  <circle cx="38" cy="48" r="8" fill="#ff6b7d" opacity="0.4" />
+  <!-- Stem and leaves -->
+  <path d="M50 20 C48 10, 52 5, 55 2 C54 7, 52 12, 50 20 Z" fill="#2d6a4f" />
+  <path d="M50 20 C40 18, 30 22, 25 28 C34 26, 44 24, 50 20 Z" fill="#40916c" />
+  <path d="M50 20 C60 18, 70 22, 75 28 C66 26, 56 24, 50 20 Z" fill="#40916c" />
+  <path d="M50 20 C45 28, 40 34, 38 40 C44 32, 48 26, 50 20 Z" fill="#52b788" />
+  <path d="M50 20 C55 28, 60 34, 62 40 C56 32, 52 26, 50 20 Z" fill="#52b788" />
+</svg>
