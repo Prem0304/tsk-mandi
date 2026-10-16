@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useApp } from '../../context/AppContext';
 import { Sale, Customer } from '../../types';
-import { formatDate, formatINR } from '../../lib/utils';
+import { formatDate, formatINR, formatDateWithDay } from '../../lib/utils';
 import { generateSaleBillPdf, generateUpiQrDataUrl } from '../../lib/pdfGenerator';
 import { shareSaleBillWhatsApp } from '../../lib/whatsapp';
 import { X, Printer, Share2, Download, Check } from 'lucide-react';
@@ -131,7 +131,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
             <div className="text-[11px] space-y-1 mb-3">
               <div className="flex justify-between">
                 <span>Bill: <strong>{sale.billNo}</strong></span>
-                <span>Date: <strong>{formatDate(sale.saleDate)}</strong></span>
+                <span>Date: <strong>{formatDateWithDay(sale.saleDate, language, true)}</strong></span>
               </div>
               <div className="flex justify-between">
                 <span>Cust: <strong>{custObj.name}</strong></span>

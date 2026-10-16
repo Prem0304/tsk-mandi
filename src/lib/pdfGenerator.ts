@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { Sale, Customer, AppSettings, Supplier } from '../types';
-import { formatDate, formatINR } from './utils';
+import { formatDate, formatINR, formatDateWithDay } from './utils';
 
 export interface BillPdfOptions {
   sale: Sale;
@@ -86,7 +86,7 @@ export async function generateSaleBillPdf(options: BillPdfOptions): Promise<void
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(isThermal ? 7 : 9);
   doc.text(`Bill No: ${sale.billNo}`, margin, y);
-  doc.text(`Date: ${formatDate(sale.saleDate)}`, widthMm - margin, y, { align: 'right' });
+  doc.text(`Date: ${formatDateWithDay(sale.saleDate, language, true)}`, widthMm - margin, y, { align: 'right' });
   y += isThermal ? 3.5 : 5;
 
   doc.text(`Customer: ${customer.name}${customer.shopName ? ' (' + customer.shopName + ')' : ''}`, margin, y);
@@ -228,8 +228,8 @@ export async function generateSupplierStatementPdf(
 
   // Ledger Table
   const rows = [
-    ...purchases.map(p => [formatDate(p.purchaseDate), `Purchase Bill #${p.billNo}`, formatINR(p.netAmount), '-', '-']),
-    ...payments.map(pm => [formatDate(pm.paymentDate), `Payment (${pm.mode.toUpperCase()}) ${pm.referenceNo || ''}`, '-', formatINR(pm.amount), '-'])
+    ...purchases.map(p => [formatDateWithDay(p.purchaseDate, language, true), `Purchase Bill #${p.billNo}`, formatINR(p.netAmount), '-', '-']),
+    ...payments.map(pm => [formatDateWithDay(pm.paymentDate, language, true), `Payment (${pm.mode.toUpperCase()}) ${pm.referenceNo || ''}`, '-', formatINR(pm.amount), '-'])
   ];
 
   autoTable(doc, {

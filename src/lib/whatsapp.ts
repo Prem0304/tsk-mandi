@@ -3,7 +3,7 @@
 // English & Tamil templates for bills, passbooks, payment & crate reminders
 // ============================================================================
 
-import { formatDate, formatINR } from './utils';
+import { formatDate, formatINR, formatDateWithDay } from './utils';
 import { Sale, Customer, AppSettings } from '../types';
 
 /**
@@ -47,7 +47,7 @@ export function shareSaleBillWhatsApp(
   if (language === 'ta') {
     message = `*${shopName}*\n` +
       `வணக்கம் ${customer.name},\n` +
-      `விற்பனை பில்: *${sale.billNo}* (${formatDate(sale.saleDate)})\n\n` +
+      `விற்பனை பில்: *${sale.billNo}* (${formatDateWithDay(sale.saleDate, 'ta', true)})\n\n` +
       `பில் தொகை: *${formatINR(sale.billTotal)}*\n` +
       `இப்போது பெற்ற தொகை: *${formatINR(sale.amountReceivedNow)}*\n` +
       `தற்போதைய மொத்த பாக்கி: *${formatINR(newBalance)}*\n` +
@@ -57,7 +57,7 @@ export function shareSaleBillWhatsApp(
   } else {
     message = `*${shopName}*\n` +
       `Dear ${customer.name},\n` +
-      `Sale Bill: *${sale.billNo}* (${formatDate(sale.saleDate)})\n\n` +
+      `Sale Bill: *${sale.billNo}* (${formatDateWithDay(sale.saleDate, 'en', true)})\n\n` +
       `Bill Amount: *${formatINR(sale.billTotal)}*\n` +
       `Amount Paid Now: *${formatINR(sale.amountReceivedNow)}*\n` +
       `Total Balance Due: *${formatINR(newBalance)}*\n` +
@@ -80,7 +80,7 @@ export function sharePassbookReminderWhatsApp(
   language: 'en' | 'ta'
 ) {
   const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
-  const today = formatDate(new Date());
+  const today = formatDateWithDay(new Date(), language, true);
   const big = cratesHeld['big'] || 0;
   const small = cratesHeld['small'] || 0;
 
@@ -136,7 +136,7 @@ export function shareDailyOwnerSummaryWhatsApp(
     cratesWithCustomers: { big: number; small: number };
   }
 ) {
-  const formattedDate = formatDate(dateStr);
+  const formattedDate = formatDateWithDay(dateStr, 'en', false);
   const msg = `📊 *${settings.shopName}* - End of Day Summary (${formattedDate})\n\n` +
     `🛒 *Sales Today:* ${formatINR(summary.totalSales)}\n` +
     `💰 *Collections Today:* ${formatINR(summary.totalCollections)}\n` +

@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { formatINR, getTodayDateString } from '../../lib/utils';
+import { formatINR, getTodayDateString, formatDateWithDay } from '../../lib/utils';
 import { shareDailyOwnerSummaryWhatsApp } from '../../lib/whatsapp';
 import { exportCustomerPendingCratesExcel } from '../../lib/excelExport';
 import {
@@ -136,10 +136,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gradient-to-r from-tomato via-rose-700 to-rose-800 text-white p-4 rounded-2xl shadow-md">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="text-xs uppercase tracking-wider font-semibold bg-white/20 px-2 py-0.5 rounded">
-              {todayStr}
+            <span className="text-xs font-black bg-white/20 px-2.5 py-1 rounded-lg">
+              {formatDateWithDay(todayStr, language, false)}
             </span>
-            <span className="text-xs text-white/80">Asia/Kolkata</span>
+            <span className="text-xs text-white/80 font-medium">Mandi Live (Asia/Kolkata)</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black mt-1">
             {t('dashboard.todayOverview')}

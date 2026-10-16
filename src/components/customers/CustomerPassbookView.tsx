@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { Customer } from '../../types';
-import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
+import { formatINR, formatDate, getTodayDateString, formatDateWithDay, getDayName } from '../../lib/utils';
 import { sharePassbookReminderWhatsApp } from '../../lib/whatsapp';
 import { exportToExcel } from '../../lib/excelExport';
 import {
@@ -239,14 +239,15 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
 
   const handleExportPassbookExcel = () => {
     const data = passbookRows.map(r => ({
-      'Date': formatDate(r.date),
-      'Particulars': r.particulars,
-      'Big Crates': r.bigCrates,
-      'Small Crates': r.smallCrates,
-      'Rate': r.rate,
-      'Bought / Debit (₹)': r.debit > 0 ? r.debit : '',
-      'Paid / Credit (₹)': r.credit > 0 ? r.credit : '',
-      'Balance (₹)': r.balance
+      'Date / தேதி': formatDate(r.date),
+      'Day / கிழமை': getDayName(r.date, language, false),
+      'Particulars / விவரம்': r.particulars,
+      'Big Crates / பெரிய பெட்டி': r.bigCrates,
+      'Small Crates / சிறிய பெட்டி': r.smallCrates,
+      'Rate / விலை': r.rate,
+      'Bought / Debit (₹) / பற்று': r.debit > 0 ? r.debit : '',
+      'Paid / Credit (₹) / வரவு': r.credit > 0 ? r.credit : '',
+      'Balance (₹) / மீதி பாக்கி': r.balance
     }));
     exportToExcel(data, `Passbook_${customerObj.name.replace(/\s+/g, '_')}`, 'Passbook');
   };
@@ -448,8 +449,9 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
                 passbookRows.map(row => (
                   <React.Fragment key={row.id}>
                     <tr className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-3 pl-4 whitespace-nowrap font-mono text-slate-600">
-                        {formatDate(row.date)}
+                      <td className="p-3 pl-4 whitespace-nowrap font-mono text-slate-700">
+                        <span className="font-bold block">{formatDate(row.date)}</span>
+                        <span className="text-[10px] text-slate-400 font-sans block">{getDayName(row.date, language, false)}</span>
                       </td>
                       <td className="p-3">
                         <span className="font-bold text-slate-800">{row.particulars}</span>

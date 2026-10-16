@@ -6,7 +6,8 @@ import React from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff } from 'lucide-react';
+import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff, Calendar } from 'lucide-react';
+import { formatDateWithDay } from '../../lib/utils';
 
 interface HeaderProps {
   onOpenSearch: () => void;
@@ -36,10 +37,21 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
             <h1 className="text-base sm:text-lg font-bold tracking-tight leading-tight truncate">
               {shopName}
             </h1>
-            <p className="text-[11px] text-white/80 font-medium leading-none truncate">
-              {t('app.subtitle')}
-            </p>
+            <div className="flex items-center space-x-1.5 leading-none">
+              <span className="text-[11px] text-white/80 font-medium truncate">
+                {t('app.subtitle')}
+              </span>
+              <span className="md:hidden text-[10px] text-amber-200 font-black">
+                • {formatDateWithDay(new Date(), language, true)}
+              </span>
+            </div>
           </div>
+        </div>
+
+        {/* Date and Day Center Badge (Desktop & Tablet) */}
+        <div className="hidden md:flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-black/20 border border-white/15 text-xs font-bold text-white tracking-wide shadow-xs">
+          <Calendar className="w-3.5 h-3.5 text-amber-300" />
+          <span>{formatDateWithDay(new Date(), language, false)}</span>
         </div>
 
         {/* Action Controls */}

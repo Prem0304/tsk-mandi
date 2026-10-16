@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { CrateInventoryEvent } from '../../types';
-import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
+import { formatINR, formatDate, getTodayDateString, formatDateWithDay, getDayName } from '../../lib/utils';
 import { shareCrateReminderWhatsApp } from '../../lib/whatsapp';
 import { exportToExcel, exportCustomerPendingCratesExcel } from '../../lib/excelExport';
 import { generateCustomerPendingCratesPdf } from '../../lib/pdfGenerator';
@@ -577,7 +577,10 @@ export const CrateManagementView: React.FC = () => {
               <tbody className="divide-y divide-slate-100">
                 {recentMovements.map(m => (
                   <tr key={m.id} className="hover:bg-slate-50">
-                    <td className="p-3 pl-4 font-mono text-slate-500">{formatDate(m.movementDate)}</td>
+                    <td className="p-3 pl-4 font-mono text-slate-700 whitespace-nowrap">
+                      <span className="font-bold block">{formatDate(m.movementDate)}</span>
+                      <span className="text-[10px] text-slate-400 font-sans block">{getDayName(m.movementDate, language, false)}</span>
+                    </td>
                     <td className="p-3 font-bold capitalize">{m.partyType}</td>
                     <td className="p-3 font-semibold uppercase">{m.categoryId}</td>
                     <td className="p-3 text-center font-bold text-emerald-700">{m.qtyIn || '-'}</td>

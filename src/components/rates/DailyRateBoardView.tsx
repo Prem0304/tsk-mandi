@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
-import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
+import { formatINR, formatDate, getTodayDateString, formatDateWithDay } from '../../lib/utils';
 import {
   LineChart,
   Line,
@@ -18,7 +18,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { TrendingUp, Save, History, Check } from 'lucide-react';
+import { TrendingUp, Save, History, Check, Calendar } from 'lucide-react';
 
 export const DailyRateBoardView: React.FC = () => {
   const { t, language } = useI18n();
@@ -59,9 +59,10 @@ export const DailyRateBoardView: React.FC = () => {
 
       // Find recorded rate or simulate trend
       const rateObj = state.dailyRates.find(r => r.rateDate === dateStr);
+      const formattedDate = formatDateWithDay(dateStr, language, true);
       if (rateObj) {
         points.push({
-          date: formatDate(dateStr),
+          date: formattedDate,
           'Big Buying': rateObj.rates['big']?.buying || 0,
           'Big Selling': rateObj.rates['big']?.selling || 0,
           'Small Buying': rateObj.rates['small']?.buying || 0,
@@ -71,7 +72,7 @@ export const DailyRateBoardView: React.FC = () => {
         // Fallback for demonstration if sparse
         const baseBig = 300 + Math.sin(i) * 20;
         points.push({
-          date: formatDate(dateStr),
+          date: formattedDate,
           'Big Buying': Math.round(baseBig),
           'Big Selling': Math.round(baseBig + 50),
           'Small Buying': Math.round(baseBig * 0.65),
@@ -81,7 +82,7 @@ export const DailyRateBoardView: React.FC = () => {
     }
 
     return points;
-  }, [state.dailyRates, chartDays]);
+  }, [state.dailyRates, chartDays, language]);
 
   return (
     <div className="p-3 sm:p-5 max-w-7xl mx-auto space-y-5 pb-24 select-none">
@@ -93,9 +94,11 @@ export const DailyRateBoardView: React.FC = () => {
             <TrendingUp className="w-6 h-6 text-blue-600" />
             <span>{t('nav.rates')}</span>
           </h2>
-          <p className="text-xs text-slate-500">
-            Set morning base prices • Auto-fills purchase & sale entries
-          </p>
+          <div className="flex items-center space-x-1.5 text-xs text-slate-500 mt-0.5">
+            <Calendar className="w-3.5 h-3.5 text-blue-600" />
+            <strong className="text-blue-900 font-bold">{formatDateWithDay(todayStr, language, false)}</strong>
+            <span>• Morning Base Rates</span>
+          </div>
         </div>
 
         <button

@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
-import { formatINR, generateLotNo, getTodayDateString } from '../../lib/utils';
+import { formatINR, generateLotNo, getTodayDateString, formatDateWithDay } from '../../lib/utils';
 import { Purchase, PurchaseLine, TransportPaidBy, CrateOwnership, PaymentMode } from '../../types';
 import { X, Truck, AlertTriangle, Plus, Trash2, Box } from 'lucide-react';
 
@@ -229,9 +229,14 @@ export const PurchaseEntryModal: React.FC<PurchaseEntryModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">
-                {t('purchases.date')}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700">
+                  {t('purchases.date')}
+                </label>
+                <span className="text-[10px] font-black text-blue-900 bg-blue-100 px-1.5 py-0.5 rounded">
+                  {formatDateWithDay(purchaseDate, language, true)}
+                </span>
+              </div>
               <input
                 type="date"
                 value={purchaseDate}

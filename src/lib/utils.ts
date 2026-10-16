@@ -47,13 +47,54 @@ export function formatIndianNumber(num: number, decimals = 0): string {
 }
 
 /**
+ * Day names in English and Tamil
+ */
+export const DAY_NAMES = {
+  en: {
+    long: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    short: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  },
+  ta: {
+    long: ['ஞாயிற்றுக்கிழமை', 'திங்கட்கிழமை', 'செவ்வாய்க்கிழமை', 'புதன்கிழமை', 'வியாழக்கிழமை', 'வெள்ளிக்கிழமை', 'சனிக்கிழமை'],
+    short: ['ஞாயிறு', 'திங்கள்', 'செவ்வாய்', 'புதன்', 'வியாழன்', 'வெள்ளி', 'சனி']
+  }
+};
+
+/**
+ * Safely parse date string or Date object avoiding timezone day-shift
+ */
+export function parseDateSafe(dateInput?: string | Date): Date | null {
+  if (!dateInput) return null;
+  if (dateInput instanceof Date) return isNaN(dateInput.getTime()) ? null : dateInput;
+  if (typeof dateInput === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+      const [y, m, d] = dateInput.split('-').map(Number);
+      return new Date(y, m - 1, d, 12, 0, 0);
+    }
+    const parsed = new Date(dateInput);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+}
+
+/**
+ * Get day name for a given date
+ */
+export function getDayName(dateInput?: string | Date, language: 'en' | 'ta' = 'en', short = false): string {
+  const d = parseDateSafe(dateInput);
+  if (!d) return '';
+  const dayIndex = d.getDay();
+  const langKey = language === 'ta' ? 'ta' : 'en';
+  return short ? DAY_NAMES[langKey].short[dayIndex] : DAY_NAMES[langKey].long[dayIndex];
+}
+
+/**
  * Format date to DD-MM-YYYY
  */
 export function formatDate(dateInput?: string | Date): string {
   if (!dateInput) return '';
-  const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-  if (isNaN(d.getTime())) {
-    // If it's already YYYY-MM-DD
+  const d = parseDateSafe(dateInput);
+  if (!d) {
     if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
       const [year, month, day] = dateInput.split('-');
       return `${day}-${month}-${year}`;
@@ -64,6 +105,24 @@ export function formatDate(dateInput?: string | Date): string {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
   return `${day}-${month}-${year}`;
+}
+
+/**
+ * Format date with day of the week
+ * Examples:
+ * - short = true: "16-10-2026 (Fri)" or Tamil "16-10-2026 (வெள்ளி)"
+ * - short = false: "Friday, 16-10-2026" or Tamil "வெள்ளிக்கிழமை, 16-10-2026"
+ */
+export function formatDateWithDay(dateInput?: string | Date, language: 'en' | 'ta' = 'en', short = false): string {
+  if (!dateInput) return '';
+  const dateFormatted = formatDate(dateInput);
+  const dayName = getDayName(dateInput, language, short);
+  if (!dayName) return dateFormatted;
+
+  if (short) {
+    return `${dateFormatted} (${dayName})`;
+  }
+  return `${dayName}, ${dateFormatted}`;
 }
 
 /**

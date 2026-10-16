@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { CashClosing } from '../../types';
-import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
+import { formatINR, formatDate, getTodayDateString, formatDateWithDay } from '../../lib/utils';
 import { exportToExcel } from '../../lib/excelExport';
 import {
   Wallet,
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export const CashBookView: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { canEditOrDelete } = useAuth();
   const { state } = useApp();
 
@@ -209,17 +209,23 @@ export const CashBookView: React.FC = () => {
         </div>
 
         {/* Date Selector & Day Closing Action */}
-        <div className="flex items-center space-x-2">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={e => setSelectedDate(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-300 font-bold text-xs bg-slate-50"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center space-x-2 bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-xl">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              className="bg-transparent font-bold text-xs text-slate-800 outline-none"
+            />
+            <span className="text-[11px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
+              {formatDateWithDay(selectedDate, language, false)}
+            </span>
+          </div>
 
           <button
             onClick={handleExportCashBookExcel}
             className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+            title="Export Excel"
           >
             <Download className="w-4 h-4" />
           </button>
@@ -333,7 +339,7 @@ export const CashBookView: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
           <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
             <div className="bg-amber-600 text-white px-5 py-4 flex items-center justify-between">
-              <h3 className="font-extrabold text-base">Day Closing ({formatDate(selectedDate)})</h3>
+              <h3 className="font-extrabold text-base">Day Closing: {formatDateWithDay(selectedDate, language, false)}</h3>
               <button onClick={() => setIsClosingModalOpen(false)} className="text-white">
                 <X className="w-6 h-6" />
               </button>

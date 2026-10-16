@@ -8,7 +8,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
-import { formatINR, generateBillNo, getTodayDateString } from '../../lib/utils';
+import { formatINR, generateBillNo, getTodayDateString, formatDateWithDay } from '../../lib/utils';
 import { allocateLotsFIFO } from '../../lib/allocationEngine';
 import { Sale, SaleLine, SaleLotAllocation } from '../../types';
 import { Zap, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
@@ -24,7 +24,7 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
   onClose,
   onSaleSaved
 }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { state, customerSummaries } = useApp();
 
   const [customerId, setCustomerId] = useState('');
@@ -184,9 +184,14 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
         <div className="bg-amber-500 text-white px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Zap className="w-5 h-5 fill-white text-white" />
-            <h3 className="font-black text-base sm:text-lg">
-              {t('sales.quickSaleTitle')}
-            </h3>
+            <div>
+              <h3 className="font-black text-base sm:text-lg leading-tight">
+                {t('sales.quickSaleTitle')}
+              </h3>
+              <p className="text-[11px] text-amber-100 font-bold">
+                {formatDateWithDay(new Date(), language, false)}
+              </p>
+            </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-white hover:bg-white/10">
             <X className="w-6 h-6" />
