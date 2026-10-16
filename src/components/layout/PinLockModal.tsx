@@ -45,7 +45,7 @@ export const PinLockModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 select-none">
+    <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 select-none">
       <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xs w-full shadow-2xl text-center border border-slate-200 animate-in zoom-in-95 duration-200">
         
         {/* Mandi icon */}

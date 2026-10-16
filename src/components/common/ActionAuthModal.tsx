@@ -60,7 +60,7 @@ export const ActionAuthModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 select-none">
+    <div className="fixed inset-0 z-[80] bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 select-none">
       <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
         
         {/* Top Header */}

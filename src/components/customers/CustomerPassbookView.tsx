@@ -476,17 +476,17 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
       {/* BANK PASSBOOK STYLE TABLE */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs table-fixed min-w-[780px]">
             <thead className="bg-slate-900 text-white font-bold text-[11px] uppercase tracking-wider">
               <tr>
-                <th className="p-3 pl-4">Date</th>
-                <th className="p-3">Particulars</th>
-                <th className="p-3 text-center">Big</th>
-                <th className="p-3 text-center">Small</th>
-                <th className="p-3 text-center">Rate</th>
-                <th className="p-3 text-right">Bought (Dr)</th>
-                <th className="p-3 text-right">Paid (Cr)</th>
-                <th className="p-3 text-right pr-4">Balance</th>
+                <th className="p-3 pl-4 w-[110px] text-left">Date</th>
+                <th className="p-3 text-left">Particulars</th>
+                <th className="p-3 w-[65px] text-center">Big</th>
+                <th className="p-3 w-[65px] text-center">Small</th>
+                <th className="p-3 w-[80px] text-right">Rate</th>
+                <th className="p-3 w-[110px] text-right">Bought (Dr)</th>
+                <th className="p-3 w-[110px] text-right">Paid (Cr)</th>
+                <th className="p-3 pr-4 w-[125px] text-right">Balance</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
@@ -500,29 +500,43 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
                 passbookRows.map(row => (
                   <React.Fragment key={row.id}>
                     <tr className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-3 pl-4 whitespace-nowrap font-mono text-slate-700">
+                      <td className="p-3 pl-4 align-top whitespace-nowrap font-mono text-slate-700">
                         <span className="font-bold block">{formatDate(row.date)}</span>
                         <span className="text-[10px] text-slate-400 font-sans block">{getDayName(row.date, language, false)}</span>
                       </td>
-                      <td className="p-3">
-                        <span className="font-bold text-slate-800">{row.particulars}</span>
+                      <td className="p-3 align-top">
+                        <span className="font-bold text-slate-800 block break-words">{row.particulars}</span>
                       </td>
-                      <td className="p-3 text-center font-bold text-slate-700">
-                        {row.bigCrates}
+                      <td className="p-3 align-top text-center font-bold font-mono text-slate-700">
+                        {row.bigCrates !== '-' && Number(row.bigCrates) > 0 ? (
+                          <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-900">{row.bigCrates}</span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
                       </td>
-                      <td className="p-3 text-center font-bold text-slate-700">
-                        {row.smallCrates}
+                      <td className="p-3 align-top text-center font-bold font-mono text-slate-700">
+                        {row.smallCrates !== '-' && Number(row.smallCrates) > 0 ? (
+                          <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-900">{row.smallCrates}</span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
                       </td>
-                      <td className="p-3 text-center text-slate-500">
-                        {row.rate}
+                      <td className="p-3 align-top text-right font-mono text-slate-600">
+                        {typeof row.rate === 'number' ? (
+                          <span>₹{row.rate.toFixed(2)}</span>
+                        ) : row.rate !== '-' && row.rate !== '' ? (
+                          <span>{row.rate}</span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
                       </td>
-                      <td className="p-3 text-right font-extrabold text-slate-900">
-                        {row.debit > 0 ? formatINR(row.debit) : '-'}
+                      <td className="p-3 align-top text-right font-mono font-extrabold text-slate-900">
+                        {row.debit > 0 ? formatINR(row.debit) : <span className="text-slate-300 font-normal">-</span>}
                       </td>
-                      <td className="p-3 text-right font-extrabold text-emerald-700">
-                        {row.credit > 0 ? formatINR(row.credit) : '-'}
+                      <td className="p-3 align-top text-right font-mono font-extrabold text-emerald-700">
+                        {row.credit > 0 ? formatINR(row.credit) : <span className="text-slate-300 font-normal">-</span>}
                       </td>
-                      <td className="p-3 text-right pr-4 font-black text-slate-950 text-sm">
+                      <td className="p-3 pr-4 align-top text-right font-mono font-black text-slate-950 text-sm">
                         {formatINR(row.balance)}
                       </td>
                     </tr>
@@ -552,7 +566,7 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
 
       {/* BAD DEBT WRITE-OFF MODAL (SECTION 9 & 9A) */}
       {isWriteoffModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
+        <div className="fixed inset-0 z-[60] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
           <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
             <div className="bg-rose-700 text-white px-5 py-3.5 flex items-center justify-between">
               <h3 className="font-bold text-sm">Write-off / Discount</h3>

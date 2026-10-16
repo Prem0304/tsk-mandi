@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Mobile Drawer (When More clicked) */}
       {isOpenMobileMore && (
-        <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+        <div className="fixed inset-0 z-40 md:hidden flex justify-end">
           <div
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
             onClick={onCloseMobileMore}

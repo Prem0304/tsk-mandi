@@ -69,7 +69,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const footerNote = language === 'ta' && state.settings.billFooterTa ? state.settings.billFooterTa : state.settings.billFooter;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 select-none">
+    <div className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 select-none">
       <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
         
         {/* Top bar */}
@@ -122,83 +122,102 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
             />
 
             {/* Bill Meta */}
-            <div className="text-[11px] space-y-1 mb-3">
-              <div className="flex justify-between">
-                <span>Bill: <strong>{sale.billNo}</strong></span>
-                <span>Date: <strong>{formatDateWithDay(sale.saleDate, language, true)}</strong></span>
+            <div className="text-xs space-y-1 mb-2.5 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/80">
+              <div className="flex justify-between items-center">
+                <span><span className="text-slate-500">Bill:</span> <strong className="font-mono text-slate-950">{sale.billNo}</strong></span>
+                <span className="text-slate-700 text-[11px]"><strong>{formatDateWithDay(sale.saleDate, language, true)}</strong></span>
               </div>
-              <div className="flex justify-between">
-                <span>Cust: <strong>{custObj.name}</strong></span>
-                <span>Ph: {custObj.phone}</span>
+              <div className="flex justify-between items-center border-t border-slate-200/60 pt-1">
+                <span><span className="text-slate-500">Cust:</span> <strong className="text-slate-900">{custObj.name}</strong></span>
+                <span className="font-mono text-slate-700 text-[11px]">{custObj.phone}</span>
               </div>
               {custObj.shopName && (
-                <div>Shop: <strong>{custObj.shopName}</strong></div>
+                <div className="text-[11px] text-slate-600">
+                  <span className="text-slate-500">Shop:</span> <strong>{custObj.shopName}</strong>
+                </div>
               )}
             </div>
 
-            <div className="border-b border-dashed border-slate-400 my-2" />
-
             {/* Item Table */}
-            <div className="space-y-1.5 text-xs mb-3">
-              <div className="flex justify-between font-bold border-b border-slate-300 pb-1">
-                <span>Item</span>
-                <span>Qty</span>
-                <span>Rate</span>
-                <span>Total</span>
-              </div>
-              {sale.lines.map((l, i) => (
-                <div key={i} className="flex justify-between">
-                  <span>{l.categoryId === 'big' ? 'Big Crate' : 'Small Crate'}</span>
-                  <span className="font-bold">{l.crates}</span>
-                  <span>{l.pricePerCrate.toFixed(2)}</span>
-                  <span className="font-bold">{formatINR(l.lineTotal)}</span>
-                </div>
-              ))}
+            <div className="text-xs mb-3">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-slate-900 text-[11px] uppercase font-bold text-slate-950">
+                    <th className="py-1 text-left">{language === 'ta' ? 'பொருள்' : 'Item'}</th>
+                    <th className="py-1 text-center w-12">{language === 'ta' ? 'பெட்டி' : 'Qty'}</th>
+                    <th className="py-1 text-right w-16">{language === 'ta' ? 'விலை' : 'Rate'}</th>
+                    <th className="py-1 text-right w-20">{language === 'ta' ? 'தொகை' : 'Total'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {sale.lines.map((l, i) => (
+                    <tr key={i} className="py-1">
+                      <td className="py-1.5 text-left font-bold text-slate-900">
+                        {l.categoryId === 'big'
+                          ? (language === 'ta' ? 'Big (பெரிய)' : 'Big Crate')
+                          : (language === 'ta' ? 'Small (சிறிய)' : 'Small Crate')}
+                      </td>
+                      <td className="py-1.5 text-center font-black font-mono text-slate-950">
+                        {l.crates}
+                      </td>
+                      <td className="py-1.5 text-right font-mono text-slate-800">
+                        {l.pricePerCrate.toFixed(2)}
+                      </td>
+                      <td className="py-1.5 text-right font-black font-mono text-slate-950">
+                        {formatINR(l.lineTotal)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <div className="border-b border-dashed border-slate-400 my-2" />
-
             {/* Calculations */}
-            <div className="space-y-1 text-xs text-right mb-3">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>{formatINR(sale.subtotalAmount)}</span>
+            <div className="space-y-1 text-xs mb-3 border-t border-dashed border-slate-400 pt-2">
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-slate-600">{language === 'ta' ? 'மொத்த தொகை (Subtotal):' : 'Subtotal:'}</span>
+                <span className="font-mono font-bold text-slate-900">{formatINR(sale.subtotalAmount)}</span>
               </div>
               {sale.transportCharge > 0 && (
-                <div className="flex justify-between text-slate-600">
-                  <span>Transport:</span>
-                  <span>{formatINR(sale.transportCharge)}</span>
+                <div className="flex justify-between items-center py-0.5 text-slate-600">
+                  <span>{language === 'ta' ? 'வண்டி வாடகை (Transport):' : 'Transport:'}</span>
+                  <span className="font-mono">+{formatINR(sale.transportCharge)}</span>
                 </div>
               )}
               {sale.discount > 0 && (
-                <div className="flex justify-between text-rose-600">
-                  <span>Discount:</span>
-                  <span>-{formatINR(sale.discount)}</span>
+                <div className="flex justify-between items-center py-0.5 text-rose-600">
+                  <span>{language === 'ta' ? 'தள்ளுபடி (Discount):' : 'Discount:'}</span>
+                  <span className="font-mono">-{formatINR(sale.discount)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-sm border-t border-slate-300 pt-1">
-                <span>Bill Total:</span>
-                <span>{formatINR(sale.billTotal)}</span>
+              <div className="flex justify-between items-center font-bold text-sm border-t border-slate-300 pt-1 text-slate-950">
+                <span>{language === 'ta' ? 'பில் மொத்தம் (Bill Total):' : 'Bill Total:'}</span>
+                <span className="font-mono font-black">{formatINR(sale.billTotal)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Prev Balance:</span>
-                <span>{formatINR(previousBalance)}</span>
+              <div className="flex justify-between items-center py-0.5 text-slate-600">
+                <span>{language === 'ta' ? 'பழைய பாக்கி (Prev Balance):' : 'Prev Balance:'}</span>
+                <span className="font-mono">{formatINR(previousBalance)}</span>
               </div>
-              <div className="flex justify-between text-emerald-700 font-bold">
-                <span>Paid Now:</span>
-                <span>{formatINR(sale.amountReceivedNow)}</span>
+              <div className="flex justify-between items-center py-0.5 text-emerald-700 font-bold">
+                <span>{language === 'ta' ? 'இப்போது பெற்றது (Paid Now):' : 'Paid Now:'}</span>
+                <span className="font-mono font-black">{formatINR(sale.amountReceivedNow)}</span>
               </div>
-              <div className="flex justify-between font-black text-sm border-t border-dashed border-slate-400 pt-1 text-slate-950">
-                <span>Net Balance Due:</span>
-                <span>{formatINR(newBalance)}</span>
+              <div className="flex justify-between items-center font-black text-sm border-t-2 border-slate-900 pt-1 text-slate-950">
+                <span>{language === 'ta' ? 'நிகர பாக்கி (Net Balance Due):' : 'Net Balance Due:'}</span>
+                <span className="font-mono font-black text-base">{formatINR(newBalance)}</span>
               </div>
             </div>
 
-            <div className="border-b border-dashed border-slate-400 my-2" />
-
             {/* Crates Pending */}
-            <div className="text-center font-bold text-xs my-2">
-              Crates Pending With You: Big: {cratesHeld['big'] || 0} | Small: {cratesHeld['small'] || 0}
+            <div className="text-center font-bold text-[11px] my-2 bg-amber-50/80 border border-amber-200/80 rounded-xl p-2 text-amber-950">
+              <span className="block font-semibold text-slate-600 text-[10px] uppercase tracking-wide">
+                {language === 'ta' ? 'வாடிக்கையாளரிடம் உள்ள காலி பெட்டிகள்' : 'Pending Crates With Customer'}
+              </span>
+              <div className="mt-0.5 space-x-3 font-mono">
+                <span>Big: <strong className="text-slate-950">{cratesHeld['big'] || 0}</strong></span>
+                <span>•</span>
+                <span>Small: <strong className="text-slate-950">{cratesHeld['small'] || 0}</strong></span>
+              </div>
             </div>
 
             {/* UPI QR Code */}

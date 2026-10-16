@@ -252,18 +252,7 @@ export const App: React.FC = () => {
         onOpenMore={() => setIsMobileMoreOpen(true)}
       />
 
-      {/* Modals */}
-      <PinLockModal />
-      <ActionAuthModal />
-
-      <GlobalSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSelectCustomer={handleSelectCustomer}
-        onSelectSupplier={handleSelectSupplier}
-        onSelectSaleBill={handleSelectSaleBill}
-      />
-
+      {/* Layer 1: Operational Base Modals (z-50) */}
       <SaleEntryModal
         isOpen={isSaleModalOpen}
         onClose={() => setIsSaleModalOpen(false)}
@@ -294,11 +283,26 @@ export const App: React.FC = () => {
         defaultSupplierId={activeSupplierIdForPay}
       />
 
+      {/* Layer 2: Secondary / Search / Print Modals (z-[60]) */}
       <BillPrintModal
         isOpen={isBillPrintModalOpen}
         onClose={() => setIsBillPrintModalOpen(false)}
         sale={printedSale}
       />
+
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectCustomer={handleSelectCustomer}
+        onSelectSupplier={handleSelectSupplier}
+        onSelectSaleBill={handleSelectSaleBill}
+      />
+
+      {/* Layer 3: Transaction Modification Authorization (Password 2, z-[80]) */}
+      <ActionAuthModal />
+
+      {/* Layer 4: Master App PIN Screen Lock (Password 1, z-[100]) */}
+      <PinLockModal />
 
     </div>
   );

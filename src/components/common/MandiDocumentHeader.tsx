@@ -48,38 +48,42 @@ export const MandiDocumentHeader: React.FC<MandiDocumentHeaderProps> = ({
     return (
       <div className="w-full text-slate-900 font-sans border-b-2 border-slate-900 pb-2 mb-2 select-none">
         {/* Devotional Top */}
-        <div className="text-center text-[10px] font-bold leading-tight">
+        <div className="text-center text-[9.5px] font-bold leading-tight text-red-900">
           <div>|| {god1} ||</div>
           <div>|| {god2} ||</div>
         </div>
 
-        <div className="text-center text-[9px] font-bold mt-0.5">
+        <div className="text-center text-[9px] font-bold text-slate-800 mt-0.5 pb-1 border-b border-dashed border-slate-300">
           Cell: {phone1} / {phone2}
         </div>
 
         {/* Center with Images */}
-        <div className="flex items-center justify-between mt-1 px-1">
-          <img
-            src={MURUGAR_IMAGE_DATA}
-            alt="Murugar"
-            className="w-8 h-11 object-contain shrink-0"
-          />
-          <div className="text-center px-1 flex-1">
+        <div className="flex items-center justify-between mt-1 px-0.5 gap-1">
+          <div className="w-8 flex justify-center shrink-0">
+            <img
+              src={MURUGAR_IMAGE_DATA}
+              alt="Murugar"
+              className="w-8 h-11 object-contain"
+            />
+          </div>
+          <div className="text-center px-0.5 flex-1">
             <h1 className="text-xl font-black tracking-tight leading-none text-slate-950">
               {shopName}
             </h1>
-            <p className="text-[9px] font-black uppercase text-slate-900 mt-0.5 leading-tight">
+            <p className="text-[8.5px] font-black uppercase text-tomato mt-0.5 leading-tight">
               {subtitle}
             </p>
-            <p className="text-[8px] font-semibold text-slate-700 leading-tight mt-0.5">
+            <p className="text-[7.5px] font-semibold text-slate-700 leading-tight mt-0.5">
               {address}
             </p>
           </div>
-          <img
-            src={TOMATO_IMAGE_DATA}
-            alt="Tomato"
-            className="w-8 h-8 object-contain shrink-0"
-          />
+          <div className="w-8 flex justify-center shrink-0">
+            <img
+              src={TOMATO_IMAGE_DATA}
+              alt="Tomato"
+              className="w-7 h-7 object-contain"
+            />
+          </div>
         </div>
 
         {docTitle && (
@@ -95,41 +99,45 @@ export const MandiDocumentHeader: React.FC<MandiDocumentHeaderProps> = ({
   if (isThermal) {
     return (
       <div className="w-full text-slate-900 font-sans border-b-2 border-slate-900 pb-2.5 mb-2.5 select-none">
-        {/* Top Devotional & Contacts */}
-        <div className="flex justify-between items-start text-[10px] font-bold leading-snug">
-          <div className="text-left font-mono">
-            <div>Cell: {phone1}</div>
-            <div className="pl-6">{phone2}</div>
-          </div>
-          <div className="text-center flex-1 mx-1 text-slate-900">
-            <div>|| {god1} ||</div>
-            <div>|| {god2} ||</div>
-          </div>
+        {/* Devotional Top */}
+        <div className="text-center font-bold text-red-900 leading-tight text-[10.5px]">
+          <div>|| {god1} ||</div>
+          <div>|| {god2} ||</div>
+        </div>
+
+        {/* Contacts Row */}
+        <div className="flex justify-between items-center text-[10px] font-bold text-slate-800 mt-1 pb-1 border-b border-dashed border-slate-300">
+          <div className="font-mono">Cell: {phone1} / {phone2}</div>
+          {settings?.gstNumber && <div className="text-slate-600 font-mono text-[9px]">GST: {settings.gstNumber}</div>}
         </div>
 
         {/* Center Branding with Murugar and Tomato */}
-        <div className="flex items-center justify-between mt-1.5 gap-1.5">
-          <img
-            src={MURUGAR_IMAGE_DATA}
-            alt="Murugar"
-            className="w-11 h-15 object-contain shrink-0 rounded"
-          />
+        <div className="flex items-center justify-between mt-1.5 gap-2">
+          <div className="w-11 flex justify-center shrink-0">
+            <img
+              src={MURUGAR_IMAGE_DATA}
+              alt="Murugar"
+              className="w-11 h-15 object-contain rounded"
+            />
+          </div>
           <div className="text-center flex-1 px-1">
             <h1 className="text-2xl font-black tracking-wider leading-none text-slate-950">
               {shopName}
             </h1>
-            <p className="text-[10.5px] font-black uppercase tracking-wide text-slate-900 mt-1 leading-tight">
+            <p className="text-[10.5px] font-black uppercase tracking-wide text-tomato mt-1 leading-tight">
               {subtitle}
             </p>
             <p className="text-[9px] font-semibold text-slate-700 leading-tight mt-0.5">
               {address}
             </p>
           </div>
-          <img
-            src={TOMATO_IMAGE_DATA}
-            alt="Tomato"
-            className="w-10 h-10 object-contain shrink-0"
-          />
+          <div className="w-11 flex justify-center shrink-0">
+            <img
+              src={TOMATO_IMAGE_DATA}
+              alt="Tomato"
+              className="w-10 h-10 object-contain"
+            />
+          </div>
         </div>
 
         {docTitle && (
