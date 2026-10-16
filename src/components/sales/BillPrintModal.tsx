@@ -9,6 +9,7 @@ import { Sale, Customer } from '../../types';
 import { formatDate, formatINR, formatDateWithDay } from '../../lib/utils';
 import { generateSaleBillPdf, generateUpiQrDataUrl } from '../../lib/pdfGenerator';
 import { shareSaleBillWhatsApp } from '../../lib/whatsapp';
+import { MandiDocumentHeader } from '../common/MandiDocumentHeader';
 import { X, Printer, Share2, Download, Check } from 'lucide-react';
 
 interface BillPrintModalProps {
@@ -112,20 +113,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               isThermal ? 'w-full max-w-[320px] text-xs' : 'w-full max-w-md text-sm'
             }`}
           >
-            {/* Header */}
-            <div className="text-center space-y-1 mb-3">
-              <h2 className="font-black text-base sm:text-lg text-slate-950 font-sans">
-                {shopName}
-              </h2>
-              <p className="text-[11px] text-slate-600 font-sans">{state.settings.address}</p>
-              <p className="text-[11px] text-slate-600 font-sans">
-                Ph: {state.settings.phone} {state.settings.gstNumber ? `| GST: ${state.settings.gstNumber}` : ''}
-              </p>
-              <div className="border-b border-dashed border-slate-400 my-2" />
-              <div className="font-bold text-xs uppercase tracking-wider font-sans">
-                {language === 'ta' ? 'விற்பனை பில்' : 'CASH / CREDIT BILL'}
-              </div>
-            </div>
+            {/* Mandi Letterhead Header */}
+            <MandiDocumentHeader
+              settings={state.settings}
+              language={language}
+              format={printFormat}
+              docTitle={language === 'ta' ? 'விற்பனை பில்' : 'CASH / CREDIT BILL'}
+            />
 
             {/* Bill Meta */}
             <div className="text-[11px] space-y-1 mb-3">

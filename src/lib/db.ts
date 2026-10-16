@@ -38,12 +38,19 @@ const DB_VERSION = 1;
 
 export const DEFAULT_SETTINGS: AppSettings = {
   id: 'primary',
-  shopName: 'TSK Tomato and Vegetable Mandi',
-  shopNameTa: 'TSK தக்காளி மற்றும் காய்கறி மண்டி',
-  address: 'Wholesale Market Yard, Dindigul Road',
-  phone: '9876543210',
-  upiId: '9876543210@upi',
-  gstNumber: '33AABCT1234D1Z5',
+  shopName: 'T.S.K',
+  shopNameTa: 'T.S.K',
+  shopSubtitle: 'Thakkali Kaaikari Commission Mandi',
+  shopSubtitleTa: 'தக்காளி காய்கறி கமிஷன் மண்டி',
+  godName1: 'Shree Valaguranathan Thunai',
+  godName1Ta: 'ஸ்ரீ வலகுருநாதன் துணை',
+  godName2: 'Shree Angalaeeswari Thunai',
+  godName2Ta: 'ஸ்ரீ அங்காளஈஸ்வரி துணை',
+  address: 'Shop no 30, Kamarajar Market, Thevaram-625530',
+  phone: '9715813463',
+  altPhone: '8190801030',
+  upiId: '9715813463@upi',
+  gstNumber: '',
   billFooter: 'Thank you for your business! Please return empty crates promptly.',
   billFooterTa: 'உங்கள் வணிகத்திற்கு நன்றி! காலி பெட்டிகளை உடனுக்குடன் திருப்பித் தரவும்.',
   paymentAllocationRule: 'supplier_first',
@@ -132,9 +139,28 @@ class DatabaseService {
       try {
         const parsed = JSON.parse(raw);
         // Ensure default settings and categories are merged if missing
+        const settings = { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) };
+        if (settings.address === 'Wholesale Market Yard, Dindigul Road') {
+          settings.address = DEFAULT_SETTINGS.address;
+        }
+        if (settings.phone === '9876543210') {
+          settings.phone = DEFAULT_SETTINGS.phone;
+          settings.altPhone = DEFAULT_SETTINGS.altPhone;
+        }
+        if (settings.shopName === 'TSK Tomato and Vegetable Mandi') {
+          settings.shopName = DEFAULT_SETTINGS.shopName;
+          settings.shopSubtitle = DEFAULT_SETTINGS.shopSubtitle;
+          settings.shopSubtitleTa = DEFAULT_SETTINGS.shopSubtitleTa;
+        }
+        if (!settings.altPhone) settings.altPhone = DEFAULT_SETTINGS.altPhone;
+        if (!settings.godName1) settings.godName1 = DEFAULT_SETTINGS.godName1;
+        if (!settings.godName1Ta) settings.godName1Ta = DEFAULT_SETTINGS.godName1Ta;
+        if (!settings.godName2) settings.godName2 = DEFAULT_SETTINGS.godName2;
+        if (!settings.godName2Ta) settings.godName2Ta = DEFAULT_SETTINGS.godName2Ta;
+
         return {
           ...parsed,
-          settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
+          settings,
           categories: parsed.categories && parsed.categories.length > 0 ? parsed.categories : INITIAL_CATEGORIES
         };
       } catch (e) {

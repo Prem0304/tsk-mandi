@@ -10,6 +10,7 @@ import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { exportFullBackupExcel } from '../../lib/excelExport';
 import { CrateCategory, PaymentAllocationRule } from '../../types';
+import { MandiDocumentHeader } from '../common/MandiDocumentHeader';
 import {
   Settings as SettingsIcon,
   Save,
@@ -22,6 +23,7 @@ import {
   Store,
   Shield,
   Plus,
+  Image as ImageIcon,
   AlertTriangle
 } from 'lucide-react';
 
@@ -33,8 +35,15 @@ export const SettingsView: React.FC = () => {
   // Settings form fields
   const [shopName, setShopName] = useState(state.settings.shopName);
   const [shopNameTa, setShopNameTa] = useState(state.settings.shopNameTa);
+  const [shopSubtitle, setShopSubtitle] = useState(state.settings.shopSubtitle || 'Thakkali Kaaikari Commission Mandi');
+  const [shopSubtitleTa, setShopSubtitleTa] = useState(state.settings.shopSubtitleTa || 'தக்காளி காய்கறி கமிஷன் மண்டி');
+  const [godName1, setGodName1] = useState(state.settings.godName1 || 'Shree Valaguranathan Thunai');
+  const [godName1Ta, setGodName1Ta] = useState(state.settings.godName1Ta || 'ஸ்ரீ வலகுருநாதன் துணை');
+  const [godName2, setGodName2] = useState(state.settings.godName2 || 'Shree Angalaeeswari Thunai');
+  const [godName2Ta, setGodName2Ta] = useState(state.settings.godName2Ta || 'ஸ்ரீ அங்காளஈஸ்வரி துணை');
   const [address, setAddress] = useState(state.settings.address);
   const [phone, setPhone] = useState(state.settings.phone);
+  const [altPhone, setAltPhone] = useState(state.settings.altPhone || '8190801030');
   const [upiId, setUpiId] = useState(state.settings.upiId);
   const [gstNumber, setGstNumber] = useState(state.settings.gstNumber || '');
   const [billFooter, setBillFooter] = useState(state.settings.billFooter);
@@ -56,8 +65,15 @@ export const SettingsView: React.FC = () => {
     dbService.updateSettings({
       shopName,
       shopNameTa,
+      shopSubtitle,
+      shopSubtitleTa,
+      godName1,
+      godName1Ta,
+      godName2,
+      godName2Ta,
       address,
       phone,
+      altPhone,
       upiId,
       gstNumber: gstNumber || undefined,
       billFooter,
@@ -179,12 +195,12 @@ export const SettingsView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Mandi Name (English)</label>
+            <label className="font-bold text-slate-700 block mb-1">Mandi Name (Center Brand)</label>
             <input
               type="text"
               value={shopName}
               onChange={e => setShopName(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-sm"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-black text-sm"
             />
           </div>
 
@@ -194,17 +210,93 @@ export const SettingsView: React.FC = () => {
               type="text"
               value={shopNameTa}
               onChange={e => setShopNameTa(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-sm"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-black text-sm"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Phone Number</label>
+            <label className="font-bold text-slate-700 block mb-1">Subtitle / Line (English)</label>
+            <input
+              type="text"
+              value={shopSubtitle}
+              onChange={e => setShopSubtitle(e.target.value)}
+              placeholder="Thakkali Kaaikari Commission Mandi"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Subtitle / Line (Tamil)</label>
+            <input
+              type="text"
+              value={shopSubtitleTa}
+              onChange={e => setShopSubtitleTa(e.target.value)}
+              placeholder="தக்காளி காய்கறி கமிஷன் மண்டி"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Top Center Invocation 1</label>
+            <input
+              type="text"
+              value={godName1}
+              onChange={e => setGodName1(e.target.value)}
+              placeholder="Shree Valaguranathan Thunai"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Top Center Invocation 1 (Tamil)</label>
+            <input
+              type="text"
+              value={godName1Ta}
+              onChange={e => setGodName1Ta(e.target.value)}
+              placeholder="ஸ்ரீ வலகுருநாதன் துணை"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Top Center Invocation 2</label>
+            <input
+              type="text"
+              value={godName2}
+              onChange={e => setGodName2(e.target.value)}
+              placeholder="Shree Angalaeeswari Thunai"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Top Center Invocation 2 (Tamil)</label>
+            <input
+              type="text"
+              value={godName2Ta}
+              onChange={e => setGodName2Ta(e.target.value)}
+              placeholder="ஸ்ரீ அங்காளஈஸ்வரி துணை"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Primary Mobile (Top Left Line 1)</label>
             <input
               type="text"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-sm"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-bold text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Secondary Mobile (Top Left Line 2)</label>
+            <input
+              type="text"
+              value={altPhone}
+              onChange={e => setAltPhone(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-bold text-xs"
             />
           </div>
 
@@ -214,18 +306,18 @@ export const SettingsView: React.FC = () => {
               type="text"
               value={upiId}
               onChange={e => setUpiId(e.target.value)}
-              placeholder="e.g. 9876543210@upi"
-              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-sm"
+              placeholder="e.g. 9715813463@upi"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
             />
           </div>
 
           <div className="sm:col-span-2">
-            <label className="font-bold text-slate-700 block mb-1">Address / Yard Location</label>
+            <label className="font-bold text-slate-700 block mb-1">Address / Shop Location</label>
             <input
               type="text"
               value={address}
               onChange={e => setAddress(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-medium text-xs"
+              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold text-xs"
             />
           </div>
 
@@ -249,6 +341,35 @@ export const SettingsView: React.FC = () => {
               onChange={e => setAppPin(e.target.value)}
               placeholder="1234"
               className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono font-bold text-center tracking-widest text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Live Letterhead Preview */}
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <div className="flex items-center space-x-2 text-xs font-bold text-slate-600 mb-2">
+            <ImageIcon className="w-4 h-4 text-tomato" />
+            <span>Official Letterhead Preview (Used in all Bills, Passbooks & Reports)</span>
+          </div>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl max-w-2xl mx-auto shadow-inner">
+            <MandiDocumentHeader
+              settings={{
+                ...state.settings,
+                shopName,
+                shopNameTa,
+                shopSubtitle,
+                shopSubtitleTa,
+                godName1,
+                godName1Ta,
+                godName2,
+                godName2Ta,
+                address,
+                phone,
+                altPhone
+              }}
+              language={language}
+              format="a4"
+              docTitle="OFFICIAL LETTERHEAD SAMPLE"
             />
           </div>
         </div>

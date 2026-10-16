@@ -14,11 +14,14 @@ import { Customer } from '../../types';
 import { formatINR, formatDate, getTodayDateString, formatDateWithDay, getDayName } from '../../lib/utils';
 import { sharePassbookReminderWhatsApp } from '../../lib/whatsapp';
 import { exportToExcel } from '../../lib/excelExport';
+import { generateCustomerPassbookPdf } from '../../lib/pdfGenerator';
+import { MandiDocumentHeader } from '../common/MandiDocumentHeader';
 import {
   BookOpen,
   ArrowLeft,
   Share2,
   Download,
+  Printer,
   PlusCircle,
   Eye,
   EyeOff,
@@ -252,6 +255,29 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
     exportToExcel(data, `Passbook_${customerObj.name.replace(/\s+/g, '_')}`, 'Passbook');
   };
 
+  const handleExportPassbookPdf = () => {
+    if (!customerObj || !customerSummary) return;
+    generateCustomerPassbookPdf(
+      customerObj,
+      state.settings,
+      passbookRows.map(r => ({
+        date: formatDateWithDay(r.date, language, true),
+        particulars: r.particulars,
+        bigCrates: r.bigCrates,
+        smallCrates: r.smallCrates,
+        rate: r.rate,
+        debit: r.debit,
+        credit: r.credit,
+        balance: r.balance
+      })),
+      customerSummary.totalBilled + customerSummary.openingBalance,
+      customerSummary.totalPaid + customerSummary.totalWrittenOff,
+      customerSummary.currentBalance,
+      customerSummary.cratesHeld,
+      language
+    );
+  };
+
   const handleSaveWriteoff = () => {
     if (writeoffAmount <= 0) {
       alert('Enter a valid write-off amount');
@@ -339,6 +365,14 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
             </button>
 
             <button
+              onClick={handleExportPassbookPdf}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+            >
+              <Printer className="w-4 h-4 text-tomato" />
+              <span>PDF Statement</span>
+            </button>
+
+            <button
               onClick={() => onOpenReceivePayment(customerId)}
               className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-tomato hover:bg-rose-700 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
             >
@@ -420,6 +454,17 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
             <span>Bad Debt Write-off</span>
           </button>
         )}
+      </div>
+
+      {/* Print-Only Mandi Letterhead Header */}
+      <div className="hidden print:block mb-4">
+        <MandiDocumentHeader
+          settings={state.settings}
+          language={language}
+          format="a4"
+          docTitle={language === 'ta' ? `வாடிக்கையாளர் கணக்கு புத்தகம்: ${customerObj.name}` : `CUSTOMER PASSBOOK STATEMENT: ${customerObj.name.toUpperCase()}`}
+          docSubtitle={`Ph: ${customerObj.phone} ${customerObj.shopName ? '• ' + customerObj.shopName : ''}`}
+        />
       </div>
 
       {/* BANK PASSBOOK STYLE TABLE */}

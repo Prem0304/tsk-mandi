@@ -325,9 +325,16 @@ export interface AppSettings {
   id: string;
   shopName: string;
   shopNameTa: string;
+  shopSubtitle?: string;
+  shopSubtitleTa?: string;
+  godName1?: string;
+  godName1Ta?: string;
+  godName2?: string;
+  godName2Ta?: string;
   logoUrl?: string;
   address: string;
   phone: string;
+  altPhone?: string;
   upiId: string;
   gstNumber?: string;
   billFooter: string;

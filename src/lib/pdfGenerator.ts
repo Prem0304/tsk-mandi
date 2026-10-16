@@ -1,6 +1,10 @@
 // ============================================================================
 // PDF GENERATION SERVICE (JSPDF + AUTOTABLE + THERMAL & A4/A5 FORMATS)
-// Supports English & Tamil headers, UPI QR Code embedding
+// Unified Official Mandi Letterhead:
+// - Top Left: Cell 9715813463 / 8190801030
+// - Top Center: Shree Valaguranathan Thunai / Shree Angalaeeswari Thunai
+// - Center Branding: T.S.K | Thakkali Kaaikari Commission Mandi | Shop no 30...
+// - Flanking Images: Lord Murugar sketch (Left) & Ripe Tomato Graphic (Right)
 // ============================================================================
 
 import jsPDF from 'jspdf';
@@ -8,6 +12,7 @@ import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { Sale, Customer, AppSettings, Supplier } from '../types';
 import { formatDate, formatINR, formatDateWithDay } from './utils';
+import { MURUGAR_IMAGE_DATA, TOMATO_IMAGE_DATA } from '../assets/images';
 
 export interface BillPdfOptions {
   sale: Sale;
@@ -17,6 +22,14 @@ export interface BillPdfOptions {
   format: 'thermal_80' | 'thermal_58' | 'a4' | 'a5';
   previousBalance: number;
   cratesHeld: Record<string, number>;
+}
+
+export interface MandiPdfHeaderOptions {
+  settings: AppSettings;
+  language?: 'en' | 'ta';
+  format?: 'thermal_80' | 'thermal_58' | 'a4' | 'a5';
+  title?: string;
+  startY?: number;
 }
 
 /**
@@ -33,15 +46,231 @@ export async function generateUpiQrDataUrl(upiId: string, payeeName: string, amo
 }
 
 /**
+ * Universal Mandi Letterhead Header Renderer for jsPDF Documents
+ * Draws: Invocations, Phones, Murugar sketch, T.S.K, Mandi title, Address, Tomato, Divider
+ * Returns: Updated Y coordinate to continue drawing body content
+ */
+export function drawMandiDocumentHeader(doc: jsPDF, options: MandiPdfHeaderOptions): number {
+  const { settings, language = 'en', format = 'a4', title } = options;
+  const isThermal58 = format === 'thermal_58';
+  const isThermal80 = format === 'thermal_80';
+  const isThermal = isThermal58 || isThermal80;
+  const isA5 = format === 'a5';
+  const widthMm = isThermal58 ? 58 : isThermal80 ? 80 : isA5 ? 148 : 210;
+  const margin = isThermal58 ? 3 : isThermal80 ? 4 : isA5 ? 10 : 14;
+
+  const shopName = settings.shopName || 'T.S.K';
+  const subtitle = language === 'ta'
+    ? (settings.shopSubtitleTa || 'தக்காளி காய்கறி கமிஷன் மண்டி')
+    : (settings.shopSubtitle || 'Thakkali Kaaikari Commission Mandi');
+  
+  const address = language === 'ta'
+    ? (settings.address === 'Shop no 30, Kamarajar Market, Thevaram-625530'
+        ? 'கடை எண் 30, காமராஜர் மார்க்கெட், தேவாரம்-625530'
+        : (settings.address || 'Shop no 30, Kamarajar Market, Thevaram-625530'))
+    : (settings.address || 'Shop no 30, Kamarajar Market, Thevaram-625530');
+
+  const phone1 = settings.phone || '9715813463';
+  const phone2 = settings.altPhone || '8190801030';
+  const god1 = 'Shree Valaguranathan Thunai';
+  const god2 = 'Shree Angalaeeswari Thunai';
+
+  let y = options.startY || (isThermal ? 4.5 : 8);
+
+  // 1. THERMAL 58MM COMPACT LAYOUT
+  if (isThermal58) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(153, 27, 27);
+    doc.text(`|| ${god1} ||`, widthMm / 2, y, { align: 'center' });
+    y += 2.5;
+    doc.text(`|| ${god2} ||`, widthMm / 2, y, { align: 'center' });
+    y += 2.8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Cell: ${phone1} / ${phone2}`, widthMm / 2, y, { align: 'center' });
+    y += 2.5;
+
+    // Murugar on left (6x9mm), Tomato on right (6x6mm)
+    const imgY = y;
+    try {
+      doc.addImage(MURUGAR_IMAGE_DATA, 'JPEG', margin, imgY, 6, 9);
+      doc.addImage(TOMATO_IMAGE_DATA, 'PNG', widthMm - margin - 6, imgY + 1.5, 6, 6);
+    } catch (e) {
+      console.warn('Failed to add images to 58mm PDF:', e);
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
+    doc.text(shopName, widthMm / 2, y + 3.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(4.8);
+    doc.setTextColor(215, 38, 61);
+    doc.text(subtitle, widthMm / 2, y + 6.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(4.2);
+    doc.setTextColor(71, 85, 105);
+    doc.text(address, widthMm / 2, y + 9, { align: 'center' });
+
+    y += 10.5;
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(15, 23, 42);
+    doc.line(margin, y, widthMm - margin, y);
+    y += 2;
+
+    if (title) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.setTextColor(15, 23, 42);
+      doc.text(title, widthMm / 2, y, { align: 'center' });
+      y += 2.8;
+    }
+
+    return y;
+  }
+
+  // 2. THERMAL 80MM STANDARD POS LAYOUT
+  if (isThermal80) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(153, 27, 27);
+    doc.text(`|| ${god1} ||`, widthMm / 2, y, { align: 'center' });
+    y += 3;
+    doc.text(`|| ${god2} ||`, widthMm / 2, y, { align: 'center' });
+    y += 3.2;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Cell: ${phone1} / ${phone2}`, widthMm / 2, y, { align: 'center' });
+    y += 2.5;
+
+    // Murugar on left (8x12mm), Tomato on right (8x8mm)
+    const imgY = y;
+    try {
+      doc.addImage(MURUGAR_IMAGE_DATA, 'JPEG', margin, imgY, 8, 12);
+      doc.addImage(TOMATO_IMAGE_DATA, 'PNG', widthMm - margin - 8, imgY + 2, 8, 8);
+    } catch (e) {
+      console.warn('Failed to add images to 80mm PDF:', e);
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42);
+    doc.text(shopName, widthMm / 2, y + 4.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.setTextColor(215, 38, 61);
+    doc.text(subtitle, widthMm / 2, y + 8, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(address, widthMm / 2, y + 11, { align: 'center' });
+
+    y += 13.5;
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(15, 23, 42);
+    doc.line(margin, y, widthMm - margin, y);
+    y += 2.5;
+
+    if (title) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(15, 23, 42);
+      doc.text(title, widthMm / 2, y, { align: 'center' });
+      y += 3.5;
+    }
+
+    return y;
+  }
+
+  // 3. STANDARD A4 / A5 LETTERHEAD LAYOUT
+  // Top Phones on Left
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(isA5 ? 7.5 : 8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`Cell: ${phone1}`, margin, y);
+  doc.text(`        ${phone2}`, margin, y + (isA5 ? 3.5 : 4.2));
+
+  // Top Devotional Invocations Center
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(isA5 ? 8 : 9.5);
+  doc.setTextColor(153, 27, 27);
+  doc.text(`|| ${god1} ||`, widthMm / 2, y, { align: 'center' });
+  doc.text(`|| ${god2} ||`, widthMm / 2, y + (isA5 ? 3.8 : 4.5), { align: 'center' });
+
+  if (settings.gstNumber) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(isA5 ? 6.5 : 7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`GST: ${settings.gstNumber}`, widthMm - margin, y, { align: 'right' });
+  }
+
+  y += isA5 ? 7.5 : 9;
+
+  // Murugar Sketch on Left & Tomato on Right
+  const murW = isA5 ? 13 : 17;
+  const murH = murW * 1.5; // 19.5mm / 25.5mm
+  const tomW = isA5 ? 13 : 17;
+  const tomH = tomW;
+
+  try {
+    doc.addImage(MURUGAR_IMAGE_DATA, 'JPEG', margin + 2, y, murW, murH);
+    doc.addImage(TOMATO_IMAGE_DATA, 'PNG', widthMm - margin - tomW - 2, y + (murH - tomH) / 2, tomW, tomH);
+  } catch (e) {
+    console.warn('Failed to add images to A4/A5 PDF:', e);
+  }
+
+  // Center Branding: T.S.K + Subtitle + Address
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(isA5 ? 20 : 26);
+  doc.setTextColor(15, 23, 42);
+  doc.text(shopName, widthMm / 2, y + (isA5 ? 6 : 8), { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(isA5 ? 9.5 : 11.5);
+  doc.setTextColor(215, 38, 61);
+  doc.text(subtitle, widthMm / 2, y + (isA5 ? 12 : 15), { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(isA5 ? 7.5 : 9);
+  doc.setTextColor(71, 85, 105);
+  doc.text(address, widthMm / 2, y + (isA5 ? 17 : 21), { align: 'center' });
+
+  y += murH + 3;
+
+  // Divider Line
+  doc.setLineWidth(0.4);
+  doc.setDrawColor(15, 23, 42);
+  doc.line(margin, y, widthMm - margin, y);
+  y += 3;
+
+  if (title) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(isA5 ? 8.5 : 10.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(title, widthMm / 2, y + 1, { align: 'center' });
+    y += 5.5;
+  }
+
+  return y;
+}
+
+/**
  * Generate and download Sale Bill PDF (Thermal 80mm/58mm or A4/A5)
  */
 export async function generateSaleBillPdf(options: BillPdfOptions): Promise<void> {
   const { sale, customer, settings, language, format, previousBalance, cratesHeld } = options;
   const isThermal = format === 'thermal_80' || format === 'thermal_58';
   const widthMm = format === 'thermal_58' ? 58 : format === 'thermal_80' ? 80 : format === 'a5' ? 148 : 210;
-  
-  // For thermal, height adapts dynamically; start with reasonable initial height
-  const heightMm = isThermal ? 180 : format === 'a5' ? 210 : 297;
+  const heightMm = isThermal ? 190 : format === 'a5' ? 210 : 297;
 
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -49,42 +278,24 @@ export async function generateSaleBillPdf(options: BillPdfOptions): Promise<void
     format: [widthMm, heightMm]
   });
 
-  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
-  const billTitle = language === 'ta' ? 'விற்பனை ரசீது' : 'TAX / SALE INVOICE';
+  const billTitle = language === 'ta' ? 'விற்பனை ரசீது (CASH/CREDIT BILL)' : 'SALE INVOICE (CASH / CREDIT BILL)';
   const footerNote = language === 'ta' && settings.billFooterTa ? settings.billFooterTa : settings.billFooter;
-
   const newBalance = previousBalance + sale.billTotal - sale.amountReceivedNow;
+  const margin = isThermal ? (format === 'thermal_58' ? 3 : 4) : (format === 'a5' ? 10 : 14);
 
-  let y = 8;
-  const margin = isThermal ? 4 : 14;
-  const usableWidth = widthMm - margin * 2;
-
-  // Header
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(isThermal ? 11 : 16);
-  doc.text(shopName, widthMm / 2, y, { align: 'center' });
-  y += isThermal ? 4 : 6;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(isThermal ? 7 : 9);
-  doc.text(settings.address, widthMm / 2, y, { align: 'center' });
-  y += isThermal ? 3.5 : 5;
-  doc.text(`Phone: ${settings.phone} ${settings.gstNumber ? '| GST: ' + settings.gstNumber : ''}`, widthMm / 2, y, { align: 'center' });
-  y += isThermal ? 4 : 6;
-
-  // Title Divider
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, widthMm - margin, y);
-  y += 3;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(isThermal ? 8 : 10);
-  doc.text(billTitle, widthMm / 2, y, { align: 'center' });
-  y += isThermal ? 4 : 6;
+  // Render Official Mandi Letterhead Header
+  let y = drawMandiDocumentHeader(doc, {
+    settings,
+    language,
+    format,
+    title: billTitle,
+    startY: isThermal ? 4.5 : 8
+  });
 
   // Meta info
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(isThermal ? 7 : 9);
+  doc.setTextColor(15, 23, 42);
   doc.text(`Bill No: ${sale.billNo}`, margin, y);
   doc.text(`Date: ${formatDateWithDay(sale.saleDate, language, true)}`, widthMm - margin, y, { align: 'right' });
   y += isThermal ? 3.5 : 5;
@@ -110,43 +321,41 @@ export async function generateSaleBillPdf(options: BillPdfOptions): Promise<void
     head: tableHeaders,
     body: tableRows,
     margin: { left: margin, right: margin },
-    theme: 'grid',
+    theme: isThermal ? 'plain' : 'striped',
     styles: {
-      fontSize: isThermal ? 6.5 : 8.5,
-      cellPadding: isThermal ? 1.5 : 3,
-      halign: 'right'
+      fontSize: isThermal ? 7 : 8.5,
+      cellPadding: isThermal ? 1.5 : 2.5
     },
     headStyles: {
-      fillColor: [215, 38, 61], // Tomato red #D7263D
+      fillColor: [215, 38, 61],
       textColor: 255,
-      fontStyle: 'bold',
-      halign: 'center'
+      fontStyle: 'bold'
     },
     columnStyles: {
-      0: { halign: 'left' }
+      0: { cellWidth: isThermal ? 'auto' : 70 },
+      1: { halign: 'center' },
+      2: { halign: 'right' },
+      3: { halign: 'right' }
     }
   });
 
-  // Calculate table end y
-  const lastTableY = (doc as any).lastAutoTable?.finalY || y + 20;
-  y = lastTableY + 3;
+  y = (doc as any).lastAutoTable.finalY + 4;
 
-  // Summary Lines
-  const addSummaryRow = (label: string, value: string, bold = false) => {
-    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+  // Financial Summary Block
+  const addSummaryRow = (label: string, val: string, isBold: boolean = false) => {
+    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
     doc.setFontSize(isThermal ? 7 : 9);
-    doc.text(label, widthMm - margin - (isThermal ? 32 : 50), y);
-    doc.text(value, widthMm - margin, y, { align: 'right' });
-    y += isThermal ? 3.5 : 5;
+    doc.text(label, widthMm - margin - (isThermal ? 35 : 55), y);
+    doc.text(val, widthMm - margin, y, { align: 'right' });
+    y += isThermal ? 3.5 : 4.5;
   };
 
-  addSummaryRow('Subtotal:', formatINR(sale.subtotalAmount));
-  if (sale.transportCharge > 0) addSummaryRow('Transport:', formatINR(sale.transportCharge));
-  if (sale.discount > 0) addSummaryRow('Discount:', `-${formatINR(sale.discount)}`);
-  if (sale.roundOff !== 0) addSummaryRow('Round off:', formatINR(sale.roundOff));
-
-  doc.setLineWidth(0.2);
-  doc.line(widthMm - margin - (isThermal ? 35 : 55), y, widthMm - margin, y);
+  if (sale.transportCharge && sale.transportCharge > 0) {
+    addSummaryRow('Transport Charge:', formatINR(sale.transportCharge));
+  }
+  if (sale.discount && sale.discount > 0) {
+    addSummaryRow('Discount:', `-${formatINR(sale.discount)}`);
+  }
   y += 2;
 
   addSummaryRow('Bill Total:', formatINR(sale.billTotal), true);
@@ -187,6 +396,7 @@ export async function generateSaleBillPdf(options: BillPdfOptions): Promise<void
   // Footer note
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(isThermal ? 6 : 7.5);
+  doc.setTextColor(100, 116, 139);
   doc.text(footerNote, widthMm / 2, y, { align: 'center' });
 
   // Save PDF
@@ -207,23 +417,31 @@ export async function generateSupplierStatementPdf(
   language: 'en' | 'ta'
 ): Promise<void> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  let y = 14;
+  
+  // Render Mandi Header
+  let y = drawMandiDocumentHeader(doc, {
+    settings,
+    language,
+    format: 'a4',
+    title: `SUPPLIER STATEMENT: ${supplier.name.toUpperCase()} (${supplier.phone})`,
+    startY: 8
+  });
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text(settings.shopName, 105, y, { align: 'center' });
-  y += 6;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text(`Supplier Statement: ${supplier.name} (${supplier.phone})`, 105, y, { align: 'center' });
-  y += 8;
+  y += 2;
 
   // Balance Card
   doc.setFillColor(248, 250, 252);
-  doc.rect(14, y, 182, 14, 'F');
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(14, y, 182, 14, 2, 2, 'FD');
   doc.setFont('helvetica', 'bold');
-  doc.text(`Total Billed: ${formatINR(totalDue)}  |  Total Paid: ${formatINR(paidOut)}  |  Balance Payable: ${formatINR(balance)}`, 105, y + 9, { align: 'center' });
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(
+    `Total Billed: ${formatINR(totalDue)}   |   Total Paid: ${formatINR(paidOut)}   |   Balance Payable: ${formatINR(balance)}`,
+    105,
+    y + 9,
+    { align: 'center' }
+  );
   y += 20;
 
   // Ledger Table
@@ -241,6 +459,121 @@ export async function generateSupplierStatementPdf(
   });
 
   doc.save(`Statement_${supplier.name.replace(/\s+/g, '_')}.pdf`);
+}
+
+/**
+ * Generate Customer Passbook & Statement PDF
+ */
+export async function generateCustomerPassbookPdf(
+  customer: Customer,
+  settings: AppSettings,
+  rows: Array<{
+    date: string;
+    particulars: string;
+    bigCrates: number | string;
+    smallCrates: number | string;
+    rate: number | string;
+    debit: number;
+    credit: number;
+    balance: number;
+  }>,
+  totalBilled: number,
+  totalPaid: number,
+  currentBalance: number,
+  cratesHeld: Record<string, number>,
+  language: 'en' | 'ta' = 'en'
+): Promise<void> {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const widthMm = 210;
+  const margin = 14;
+
+  const title = language === 'ta'
+    ? `வாடிக்கையாளர் கணக்கு புத்தகம்: ${customer.name} (${customer.phone})`
+    : `CUSTOMER PASSBOOK & STATEMENT: ${customer.name.toUpperCase()} (${customer.phone})`;
+
+  // Render Mandi Header
+  let y = drawMandiDocumentHeader(doc, {
+    settings,
+    language,
+    format: 'a4',
+    title,
+    startY: 8
+  });
+
+  y += 2;
+
+  // Summary Metrics Banner
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin, y, widthMm - margin * 2, 14, 2, 2, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  
+  const bigC = cratesHeld['big'] || 0;
+  const smallC = cratesHeld['small'] || 0;
+  doc.text(
+    `Total Bought: ${formatINR(totalBilled)}   |   Total Paid: ${formatINR(totalPaid)}   |   Balance Due: ${formatINR(currentBalance)}   |   Crates Held: Big ${bigC}, Small ${smallC}`,
+    widthMm / 2,
+    y + 9,
+    { align: 'center' }
+  );
+  y += 18;
+
+  // Table
+  const head = [[
+    'Date',
+    'Particulars',
+    'Big',
+    'Small',
+    'Rate (₹)',
+    'Bought / Dr (₹)',
+    'Paid / Cr (₹)',
+    'Balance (₹)'
+  ]];
+
+  const body = rows.map(r => [
+    r.date,
+    r.particulars,
+    r.bigCrates.toString(),
+    r.smallCrates.toString(),
+    r.rate.toString(),
+    r.debit > 0 ? formatINR(r.debit) : '-',
+    r.credit > 0 ? formatINR(r.credit) : '-',
+    formatINR(r.balance)
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    head,
+    body,
+    margin: { left: margin, right: margin },
+    theme: 'grid',
+    styles: { fontSize: 8, cellPadding: 2.2 },
+    headStyles: { fillColor: [215, 38, 61], textColor: 255, fontStyle: 'bold' },
+    columnStyles: {
+      0: { cellWidth: 28 },
+      1: { cellWidth: 'auto' },
+      2: { halign: 'center', cellWidth: 14 },
+      3: { halign: 'center', cellWidth: 14 },
+      4: { halign: 'right', cellWidth: 16 },
+      5: { halign: 'right', cellWidth: 24 },
+      6: { halign: 'right', cellWidth: 24 },
+      7: { halign: 'right', fontStyle: 'bold', cellWidth: 26 }
+    }
+  });
+
+  const finalY = (doc as any).lastAutoTable?.finalY || y + 50;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text(
+    `Statement printed on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} • T.S.K Mandi System`,
+    margin,
+    finalY + 7
+  );
+
+  doc.save(`Passbook_${customer.name.replace(/\s+/g, '_')}.pdf`);
 }
 
 /**
@@ -265,35 +598,20 @@ export async function generateCustomerPendingCratesPdf(
   const widthMm = 210;
   const margin = 12;
 
-  let y = 12;
-  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
   const reportTitle = language === 'ta'
     ? 'வாடிக்கையாளர்களிடம் உள்ள பெட்டிகள் அறிக்கை'
     : 'PENDING CRATES TO BE COLLECTED FROM CUSTOMERS';
 
-  // Mandi Shop Title
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(215, 38, 61); // Tomato Red
-  doc.text(shopName, widthMm / 2, y, { align: 'center' });
-  y += 6;
+  // Render Official Mandi Letterhead Header
+  let y = drawMandiDocumentHeader(doc, {
+    settings,
+    language,
+    format: 'a4',
+    title: reportTitle,
+    startY: 8
+  });
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(75, 85, 99);
-  doc.text(settings.address || 'Wholesale Tomato & Vegetable Mandi', widthMm / 2, y, { align: 'center' });
-  y += 4.5;
-  doc.text(`Phone: ${settings.phone} ${settings.gstNumber ? '| GST: ' + settings.gstNumber : ''}`, widthMm / 2, y, { align: 'center' });
-  y += 6;
-
-  // Title banner
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(margin, y, widthMm - margin * 2, 9, 2, 2, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text(reportTitle, widthMm / 2, y + 6, { align: 'center' });
-  y += 13;
+  y += 2;
 
   // Calculate Metrics
   const totalBig = defaulters.reduce((acc, c) => acc + (c.cratesHeld['big'] || 0), 0);
@@ -352,7 +670,6 @@ export async function generateCustomerPendingCratesPdf(
     c.currentBalance !== undefined ? formatINR(c.currentBalance) : '-'
   ]);
 
-  // Total summary row at bottom of table
   body.push([
     '',
     'TOTAL SUMMARY',
@@ -400,7 +717,7 @@ export async function generateCustomerPendingCratesPdf(
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
   doc.text(
-    `Report generated on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} • TSK Mandi System`,
+    `Report generated on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} • T.S.K Mandi System`,
     margin,
     finalY + 7
   );
