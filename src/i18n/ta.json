@@ -147,7 +147,15 @@
     "discrepancy": "வித்தியாசம்",
     "markLost": "உடைந்ததாக / தொலைந்ததாக குறி",
     "whatsappReminder": "வாட்ஸ்அப் பெட்டி நினைவூட்டல்",
-    "agingDays": "நிலுவையில் உள்ள நாட்கள்"
+    "agingDays": "நிலுவையில் உள்ள நாட்கள்",
+    "downloadPending": "பெட்டிகள் பாக்கி பதிவிறக்கு",
+    "downloadExcel": "Excel-ல் பதிவிறக்கு (.xlsx)",
+    "downloadPdf": "PDF அறிக்கையாக பதிவிறக்கு",
+    "pendingCratesToCollect": "வாடிக்கையாளர்களிடம் இருந்து பெற வேண்டிய பெட்டிகள்",
+    "totalPendingBig": "மொத்த பெரிய பெட்டிகள்",
+    "totalPendingSmall": "மொத்த சிறிய பெட்டிகள்",
+    "totalPendingGrand": "மொத்தம் பெற வேண்டியவை",
+    "noPendingCrates": "வாடிக்கையாளர்களிடம் நிலுவை பெட்டிகள் எதுவும் இல்லை!"
   },
   "passbook": {
     "title": "வாடிக்கையாளர் பாஸ்புக்",

@@ -11,7 +11,8 @@ import { dbService } from '../../lib/db';
 import { CrateInventoryEvent } from '../../types';
 import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
 import { shareCrateReminderWhatsApp } from '../../lib/whatsapp';
-import { exportToExcel } from '../../lib/excelExport';
+import { exportToExcel, exportCustomerPendingCratesExcel } from '../../lib/excelExport';
+import { generateCustomerPendingCratesPdf } from '../../lib/pdfGenerator';
 import {
   Box,
   RotateCcw,
@@ -20,6 +21,8 @@ import {
   Plus,
   Share2,
   Download,
+  FileSpreadsheet,
+  Search,
   X,
   Phone,
   ArrowRight,
@@ -57,6 +60,8 @@ export const CrateManagementView: React.FC = () => {
 
   // Crate Defaulters (> Settings.crateAgingDays, default 15)
   const crateAgingDaysThreshold = state.settings.crateAgingDays || 15;
+  const [defaulterSearch, setDefaulterSearch] = useState('');
+
   const crateDefaulters = useMemo(() => {
     return customerSummaries
       .map(c => {
@@ -66,6 +71,45 @@ export const CrateManagementView: React.FC = () => {
       .filter(c => c.totalHeld > 0)
       .sort((a, b) => b.totalHeld - a.totalHeld);
   }, [customerSummaries]);
+
+  const filteredDefaulters = useMemo(() => {
+    const q = defaulterSearch.toLowerCase().trim();
+    if (!q) return crateDefaulters;
+    return crateDefaulters.filter(c =>
+      c.customerName.toLowerCase().includes(q) ||
+      c.phone.includes(q) ||
+      (c.shopName && c.shopName.toLowerCase().includes(q)) ||
+      (c.place && c.place.toLowerCase().includes(q))
+    );
+  }, [crateDefaulters, defaulterSearch]);
+
+  const totalPendingBig = useMemo(() => {
+    return crateDefaulters.reduce((acc, c) => acc + (c.cratesHeld['big'] || 0), 0);
+  }, [crateDefaulters]);
+
+  const totalPendingSmall = useMemo(() => {
+    return crateDefaulters.reduce((acc, c) => acc + (c.cratesHeld['small'] || 0), 0);
+  }, [crateDefaulters]);
+
+  const totalPendingGrand = useMemo(() => {
+    return crateDefaulters.reduce((acc, c) => acc + c.totalHeld, 0);
+  }, [crateDefaulters]);
+
+  const handleDownloadExcel = () => {
+    if (crateDefaulters.length === 0) {
+      alert(t('crates.noPendingCrates'));
+      return;
+    }
+    exportCustomerPendingCratesExcel(crateDefaulters, state.settings.shopName);
+  };
+
+  const handleDownloadPdf = () => {
+    if (crateDefaulters.length === 0) {
+      alert(t('crates.noPendingCrates'));
+      return;
+    }
+    generateCustomerPendingCratesPdf(crateDefaulters, state.settings, language);
+  };
 
   // Crate movements chronological history
   const recentMovements = useMemo(() => {
@@ -180,29 +224,53 @@ export const CrateManagementView: React.FC = () => {
 
         {canRecordCratesAndPayments && (
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setIsReturnModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow active:scale-95 transition-all"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Record Crate Return</span>
-            </button>
+            {/* Quick Export Pending Crates */}
+            <div className="flex items-center space-x-1.5 bg-amber-50 border border-amber-200 p-1 rounded-xl">
+              <button
+                onClick={handleDownloadPdf}
+                title="Download PDF report of crates to collect"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-tomato hover:bg-rose-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{t('crates.downloadPdf')}</span>
+              </button>
+              <button
+                onClick={handleDownloadExcel}
+                title="Export Excel sheet of crates to collect"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Excel</span>
+              </button>
+            </div>
 
-            <button
-              onClick={() => setIsCountModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
-            >
-              <ClipboardCheck className="w-4 h-4 text-blue-600" />
-              <span>Physical Count Check</span>
-            </button>
+            {canRecordCratesAndPayments && (
+              <>
+                <button
+                  onClick={() => setIsReturnModalOpen(true)}
+                  className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow active:scale-95 transition-all"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Record Crate Return</span>
+                </button>
 
-            <button
-              onClick={() => { setEventType('new_purchase'); setIsEventModalOpen(true); }}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
-            >
-              <Plus className="w-4 h-4 text-amber-600" />
-              <span>Buy / Damage Crates</span>
-            </button>
+                <button
+                  onClick={() => setIsCountModalOpen(true)}
+                  className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                >
+                  <ClipboardCheck className="w-4 h-4 text-blue-600" />
+                  <span>Physical Count Check</span>
+                </button>
+
+                <button
+                  onClick={() => { setEventType('new_purchase'); setIsEventModalOpen(true); }}
+                  className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                >
+                  <Plus className="w-4 h-4 text-amber-600" />
+                  <span>Buy / Damage Crates</span>
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -327,40 +395,157 @@ export const CrateManagementView: React.FC = () => {
 
       {/* TAB 2: CRATE DEFAULTERS LIST (SECTION 10.5) */}
       {activeTab === 'defaulters' && (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+          
+          {/* Header & Title */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="font-extrabold text-sm sm:text-base text-slate-900">
-                Customers Holding Mandi Crates
+              <h3 className="font-black text-base text-slate-900 flex items-center space-x-2">
+                <span>{t('crates.pendingCratesToCollect')}</span>
+                <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-black">
+                  {crateDefaulters.length}
+                </span>
               </h3>
-              <p className="text-xs text-slate-500">One-tap WhatsApp reminder to return empty crates</p>
+              <p className="text-xs text-slate-500">
+                Download reports or send one-tap WhatsApp reminders to collect empty crates
+              </p>
+            </div>
+
+            {/* Download Buttons Bar */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleDownloadPdf}
+                disabled={crateDefaulters.length === 0}
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-tomato hover:bg-rose-700 text-white font-bold text-xs shadow-sm active:scale-95 disabled:opacity-50 transition-all"
+              >
+                <Download className="w-4 h-4" />
+                <span>{t('crates.downloadPdf')}</span>
+              </button>
+              <button
+                onClick={handleDownloadExcel}
+                disabled={crateDefaulters.length === 0}
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm active:scale-95 disabled:opacity-50 transition-all"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>{t('crates.downloadExcel')}</span>
+              </button>
             </div>
           </div>
 
+          {/* 4 Summary Cards Banner */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+              <span className="text-slate-500 font-semibold block text-[10px] uppercase">
+                {t('crates.totalCustomersHolding')}
+              </span>
+              <strong className="text-slate-900 font-black text-xl">
+                {crateDefaulters.length}
+              </strong>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Holding empty crates</span>
+            </div>
+
+            <div className="bg-rose-50 border border-rose-200 p-3 rounded-2xl">
+              <span className="text-rose-800 font-semibold block text-[10px] uppercase">
+                {t('crates.totalPendingBig')}
+              </span>
+              <strong className="text-rose-700 font-black text-xl">
+                {totalPendingBig}
+              </strong>
+              <span className="text-[10px] text-rose-600 block mt-0.5">Big crates to collect</span>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl">
+              <span className="text-amber-800 font-semibold block text-[10px] uppercase">
+                {t('crates.totalPendingSmall')}
+              </span>
+              <strong className="text-amber-700 font-black text-xl">
+                {totalPendingSmall}
+              </strong>
+              <span className="text-[10px] text-amber-600 block mt-0.5">Small crates to collect</span>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl">
+              <span className="text-emerald-800 font-semibold block text-[10px] uppercase">
+                {t('crates.totalPendingGrand')}
+              </span>
+              <strong className="text-emerald-950 font-black text-xl">
+                {totalPendingGrand}
+              </strong>
+              <span className="text-[10px] text-emerald-700 block mt-0.5">Grand total crates</span>
+            </div>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={defaulterSearch}
+              onChange={e => setDefaulterSearch(e.target.value)}
+              placeholder="Search customer name, shop name, place, phone..."
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            {defaulterSearch && (
+              <button
+                onClick={() => setDefaulterSearch('')}
+                className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Customers List */}
           <div className="space-y-2">
             {crateDefaulters.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">All empty crates returned!</p>
+              <p className="text-xs text-slate-400 text-center py-8 font-medium">
+                {t('crates.noPendingCrates')}
+              </p>
+            ) : filteredDefaulters.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-8 font-medium">
+                No customers match "{defaulterSearch}"
+              </p>
             ) : (
-              crateDefaulters.map(c => (
+              filteredDefaulters.map((c, index) => (
                 <div
                   key={c.customerId}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 gap-2"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 gap-3 transition-colors"
                 >
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-900">{c.customerName}</h4>
-                    <p className="text-xs text-slate-500">{c.shopName || c.place} • {c.phone}</p>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-7 h-7 rounded-full bg-rose-100 text-rose-700 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900">{c.customerName}</h4>
+                      <p className="text-xs text-slate-500">
+                        {[c.shopName, c.place].filter(Boolean).join(' • ')} {c.phone && `• ${c.phone}`}
+                      </p>
+                      {c.currentBalance > 0 && (
+                        <p className="text-[11px] font-bold text-rose-600 mt-0.5">
+                          Money Due: {formatINR(c.currentBalance)}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 justify-between sm:justify-end">
+                  <div className="flex items-center space-x-3 justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
                     <div className="text-right">
-                      <span className="text-xs font-black text-tomato">
-                        Big: {c.cratesHeld['big'] || 0} | Small: {c.cratesHeld['small'] || 0}
+                      <div className="flex items-center space-x-1.5 text-xs font-black">
+                        <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700">
+                          Big: {c.cratesHeld['big'] || 0}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                          Small: {c.cratesHeld['small'] || 0}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-black text-slate-600 block mt-1">
+                        Total: {c.totalHeld} Crates
                       </span>
                     </div>
 
                     <button
                       onClick={() => handleShareWhatsAppDefaulter(c)}
-                      className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
+                      className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       <span>Remind (WhatsApp)</span>

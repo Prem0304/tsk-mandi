@@ -147,7 +147,15 @@
     "discrepancy": "Difference",
     "markLost": "Mark as Lost / Broken",
     "whatsappReminder": "Send WhatsApp Crate Reminder",
-    "agingDays": "Days Pending"
+    "agingDays": "Days Pending",
+    "downloadPending": "Download Crates to Collect",
+    "downloadExcel": "Export to Excel (.xlsx)",
+    "downloadPdf": "Download PDF Report",
+    "pendingCratesToCollect": "Pending Crates to be Collected from Customers",
+    "totalPendingBig": "Total Big Crates",
+    "totalPendingSmall": "Total Small Crates",
+    "totalPendingGrand": "Overall Crates to Collect",
+    "noPendingCrates": "No customers have pending crates to collect!"
   },
   "passbook": {
     "title": "Customer Passbook",

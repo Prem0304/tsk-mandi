@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { formatINR, getTodayDateString } from '../../lib/utils';
 import { shareDailyOwnerSummaryWhatsApp } from '../../lib/whatsapp';
+import { exportCustomerPendingCratesExcel } from '../../lib/excelExport';
 import {
   TrendingUp,
   DollarSign,
@@ -22,7 +23,8 @@ import {
   Share2,
   Clock,
   CheckCircle2,
-  Users
+  Users,
+  Download
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -440,7 +442,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Box className="w-4 h-4 text-amber-600" />
               <span>{t('dashboard.topCrateDefaulters')}</span>
             </h3>
-            <span className="text-xs text-slate-500">Holdings</span>
+            <div className="flex items-center space-x-2">
+              {topCrateDefaulters.length > 0 && (
+                <button
+                  onClick={() => exportCustomerPendingCratesExcel(topCrateDefaulters, state.settings.shopName)}
+                  title="Download Crates to Collect (Excel)"
+                  className="flex items-center space-x-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>Download</span>
+                </button>
+              )}
+              <span className="text-xs text-slate-400">Holdings</span>
+            </div>
           </div>
 
           <div className="space-y-2">

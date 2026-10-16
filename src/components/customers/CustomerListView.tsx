@@ -12,11 +12,13 @@ import { Customer } from '../../types';
 import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
 import {
   exportToExcel,
+  exportCustomerPendingCratesExcel,
   downloadCustomerTemplate,
   parseAndValidateCustomersExcel,
   exportErrorRows,
   ImportSummary
 } from '../../lib/excelExport';
+import { generateCustomerPendingCratesPdf } from '../../lib/pdfGenerator';
 import {
   Users,
   Search,
@@ -29,7 +31,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   Phone,
-  MapPin
+  MapPin,
+  Box
 } from 'lucide-react';
 
 interface CustomerListViewProps {
@@ -37,13 +40,13 @@ interface CustomerListViewProps {
 }
 
 export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCustomer }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { canEditOrDelete } = useAuth();
   const { state, customerSummaries } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlace, setSelectedPlace] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'due' | 'settled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'due' | 'settled' | 'crates'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -90,11 +93,31 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
         if (selectedPlace !== 'all' && c.place !== selectedPlace) return false;
         if (statusFilter === 'due' && c.currentBalance <= 0) return false;
         if (statusFilter === 'settled' && c.currentBalance > 0) return false;
+        if (statusFilter === 'crates') {
+          const totalHeld = Object.values(c.cratesHeld).reduce((a, b) => a + b, 0);
+          if (totalHeld <= 0) return false;
+        }
 
         return true;
       })
       .sort((a, b) => b.currentBalance - a.currentBalance); // Highest outstanding first
   }, [customerSummaries, searchQuery, selectedPlace, statusFilter]);
+
+  const handleDownloadCratesDue = () => {
+    const defaulters = customerSummaries
+      .map(c => ({
+        ...c,
+        totalHeld: Object.values(c.cratesHeld).reduce((a, b) => a + b, 0)
+      }))
+      .filter(c => c.totalHeld > 0)
+      .sort((a, b) => b.totalHeld - a.totalHeld);
+
+    if (defaulters.length === 0) {
+      alert(t('crates.noPendingCrates'));
+      return;
+    }
+    exportCustomerPendingCratesExcel(defaulters, state.settings.shopName);
+  };
 
   const openAddCustomer = () => {
     setEditCustomer(null);
@@ -258,6 +281,15 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
           </button>
 
           <button
+            onClick={handleDownloadCratesDue}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-xs transition-all"
+            title="Download Excel list of crates to collect"
+          >
+            <Box className="w-4 h-4 text-amber-700" />
+            <span>Crates Due Excel</span>
+          </button>
+
+          <button
             onClick={openAddCustomer}
             className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-tomato hover:bg-rose-700 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
           >
@@ -306,6 +338,7 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
             <option value="all">All Statuses</option>
             <option value="due">Due Outstanding (பாக்கி உள்ளவை)</option>
             <option value="settled">Settled (பாக்கி இல்லை)</option>
+            <option value="crates">Holding Crates (பெட்டி பாக்கி)</option>
           </select>
         </div>
 

@@ -242,3 +242,169 @@ export async function generateSupplierStatementPdf(
 
   doc.save(`Statement_${supplier.name.replace(/\s+/g, '_')}.pdf`);
 }
+
+/**
+ * Generate Printable PDF Report of Customer Pending Crates to Collect
+ */
+export async function generateCustomerPendingCratesPdf(
+  defaulters: Array<{
+    customerId: string;
+    customerName: string;
+    shopName?: string;
+    phone: string;
+    place?: string;
+    currentBalance?: number;
+    cratesHeld: Record<string, number>;
+    totalHeld: number;
+    agingDays?: number;
+  }>,
+  settings: AppSettings,
+  language: 'en' | 'ta' = 'en'
+): Promise<void> {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const widthMm = 210;
+  const margin = 12;
+
+  let y = 12;
+  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
+  const reportTitle = language === 'ta'
+    ? 'வாடிக்கையாளர்களிடம் உள்ள பெட்டிகள் அறிக்கை'
+    : 'PENDING CRATES TO BE COLLECTED FROM CUSTOMERS';
+
+  // Mandi Shop Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(215, 38, 61); // Tomato Red
+  doc.text(shopName, widthMm / 2, y, { align: 'center' });
+  y += 6;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(75, 85, 99);
+  doc.text(settings.address || 'Wholesale Tomato & Vegetable Mandi', widthMm / 2, y, { align: 'center' });
+  y += 4.5;
+  doc.text(`Phone: ${settings.phone} ${settings.gstNumber ? '| GST: ' + settings.gstNumber : ''}`, widthMm / 2, y, { align: 'center' });
+  y += 6;
+
+  // Title banner
+  doc.setFillColor(241, 245, 249);
+  doc.roundedRect(margin, y, widthMm - margin * 2, 9, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(reportTitle, widthMm / 2, y + 6, { align: 'center' });
+  y += 13;
+
+  // Calculate Metrics
+  const totalBig = defaulters.reduce((acc, c) => acc + (c.cratesHeld['big'] || 0), 0);
+  const totalSmall = defaulters.reduce((acc, c) => acc + (c.cratesHeld['small'] || 0), 0);
+  const grandTotal = defaulters.reduce((acc, c) => acc + c.totalHeld, 0);
+  const totalMoneyDue = defaulters.reduce((acc, c) => acc + (c.currentBalance || 0), 0);
+
+  // 4 Metric Summary Cards
+  const gap = 3;
+  const cardWidth = (widthMm - margin * 2 - gap * 3) / 4;
+  const cardHeight = 15;
+
+  const renderCard = (x: number, titleText: string, valueText: string, color: [number, number, number]) => {
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(titleText, x + cardWidth / 2, y + 4.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...color);
+    doc.text(valueText, x + cardWidth / 2, y + 11.5, { align: 'center' });
+  };
+
+  renderCard(margin, 'TOTAL CUSTOMERS', defaulters.length.toString(), [15, 23, 42]);
+  renderCard(margin + (cardWidth + gap) * 1, 'BIG CRATES', totalBig.toString(), [215, 38, 61]);
+  renderCard(margin + (cardWidth + gap) * 2, 'SMALL CRATES', totalSmall.toString(), [234, 88, 12]);
+  renderCard(margin + (cardWidth + gap) * 3, 'TOTAL CRATES', grandTotal.toString(), [16, 185, 129]);
+
+  y += cardHeight + 6;
+
+  // AutoTable
+  const head = [[
+    '#',
+    'Customer Name',
+    'Shop / Place',
+    'Phone',
+    'Big Crates',
+    'Small Crates',
+    'Total Crates',
+    'Money Due (₹)'
+  ]];
+
+  const body = defaulters.map((c, index) => [
+    (index + 1).toString(),
+    c.customerName,
+    [c.shopName, c.place].filter(Boolean).join(' • ') || '-',
+    c.phone,
+    (c.cratesHeld['big'] || 0).toString(),
+    (c.cratesHeld['small'] || 0).toString(),
+    c.totalHeld.toString(),
+    c.currentBalance !== undefined ? formatINR(c.currentBalance) : '-'
+  ]);
+
+  // Total summary row at bottom of table
+  body.push([
+    '',
+    'TOTAL SUMMARY',
+    `${defaulters.length} Customers`,
+    '',
+    totalBig.toString(),
+    totalSmall.toString(),
+    grandTotal.toString(),
+    formatINR(totalMoneyDue)
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    head,
+    body,
+    margin: { left: margin, right: margin },
+    theme: 'grid',
+    styles: {
+      fontSize: 8,
+      cellPadding: 2.2,
+      textColor: [30, 41, 59],
+      valign: 'middle'
+    },
+    headStyles: {
+      fillColor: [215, 38, 61],
+      textColor: 255,
+      fontStyle: 'bold',
+      halign: 'left'
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 8 },
+      3: { halign: 'center', cellWidth: 26 },
+      4: { halign: 'center', fontStyle: 'bold', cellWidth: 20 },
+      5: { halign: 'center', fontStyle: 'bold', cellWidth: 20 },
+      6: { halign: 'center', fontStyle: 'bold', textColor: [215, 38, 61], cellWidth: 22 },
+      7: { halign: 'right', cellWidth: 26 }
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252]
+    }
+  });
+
+  const finalY = (doc as any).lastAutoTable?.finalY || y + 50;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(148, 163, 184);
+  doc.text(
+    `Report generated on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} • TSK Mandi System`,
+    margin,
+    finalY + 7
+  );
+
+  const dateStr = formatDate(new Date()).replace(/-/g, '_');
+  doc.save(`Customer_Pending_Crates_To_Collect_${dateStr}.pdf`);
+}

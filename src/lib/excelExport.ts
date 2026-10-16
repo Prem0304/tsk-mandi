@@ -206,3 +206,57 @@ export function exportFullBackupExcel(state: MandiDatabaseState) {
   const today = formatDate(new Date()).replace(/-/g, '_');
   XLSX.writeFile(wb, `TSK_Mandi_Full_Backup_${today}.xlsx`);
 }
+
+/**
+ * Export Customer Pending Crates to be Collected to Excel
+ */
+export function exportCustomerPendingCratesExcel(
+  defaulters: Array<{
+    customerId: string;
+    customerName: string;
+    shopName?: string;
+    phone: string;
+    place?: string;
+    currentBalance?: number;
+    cratesHeld: Record<string, number>;
+    totalHeld: number;
+    creditLimit?: number | null;
+    agingDays?: number;
+  }>,
+  shopName = 'TSK Tomato Mandi'
+) {
+  const data = defaulters.map((c, index) => ({
+    'S.No': index + 1,
+    'Customer Name / வாடிக்கையாளர் பெயர்': c.customerName,
+    'Shop Name / கடை பெயர்': c.shopName || '-',
+    'Phone / போன்': c.phone,
+    'Place / ஊர்': c.place || '-',
+    'Big Crates Pending / பெரிய பெட்டி பாக்கி': c.cratesHeld['big'] || 0,
+    'Small Crates Pending / சிறிய பெட்டி பாக்கி': c.cratesHeld['small'] || 0,
+    'Total Crates to Collect / மொத்த பெட்டிகள்': c.totalHeld,
+    'Money Due (₹) / பண பாக்கி': c.currentBalance ?? 0,
+    'Days Pending / நாட்கள்': c.agingDays || '-'
+  }));
+
+  const totalBig = defaulters.reduce((acc, c) => acc + (c.cratesHeld['big'] || 0), 0);
+  const totalSmall = defaulters.reduce((acc, c) => acc + (c.cratesHeld['small'] || 0), 0);
+  const grandTotal = defaulters.reduce((acc, c) => acc + c.totalHeld, 0);
+  const totalBalance = defaulters.reduce((acc, c) => acc + (c.currentBalance || 0), 0);
+
+  // Summary total row
+  data.push({
+    'S.No': '' as any,
+    'Customer Name / வாடிக்கையாளர் பெயர்': 'TOTAL / மொத்தம்',
+    'Shop Name / கடை பெயர்': `${defaulters.length} Customers`,
+    'Phone / போன்': '',
+    'Place / ஊர்': '',
+    'Big Crates Pending / பெரிய பெட்டி பாக்கி': totalBig,
+    'Small Crates Pending / சிறிய பெட்டி பாக்கி': totalSmall,
+    'Total Crates to Collect / மொத்த பெட்டிகள்': grandTotal,
+    'Money Due (₹) / பண பாக்கி': totalBalance,
+    'Days Pending / நாட்கள்': '' as any
+  });
+
+  const today = formatDate(new Date()).replace(/-/g, '_');
+  exportToExcel(data, `Customer_Pending_Crates_To_Collect_${today}`, 'PendingCrates');
+}

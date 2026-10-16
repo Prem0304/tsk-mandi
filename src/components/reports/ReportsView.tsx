@@ -9,7 +9,8 @@ import { useI18n } from '../../i18n/i18nContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
-import { exportToExcel } from '../../lib/excelExport';
+import { exportToExcel, exportCustomerPendingCratesExcel } from '../../lib/excelExport';
+import { generateCustomerPendingCratesPdf } from '../../lib/pdfGenerator';
 import {
   BarChart3,
   TrendingUp,
@@ -18,15 +19,17 @@ import {
   Layers,
   FileText,
   DollarSign,
-  PieChart
+  PieChart,
+  Box,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export const ReportsView: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { state, customerSummaries, supplierSummaries } = useApp();
 
   const [activeReport, setActiveReport] = useState<
-    'profit' | 'lots' | 'collection_split' | 'sales_reg' | 'purchase_reg'
+    'profit' | 'lots' | 'collection_split' | 'sales_reg' | 'purchase_reg' | 'pending_crates'
   >('profit');
 
   const [startDate, setStartDate] = useState('');
@@ -100,6 +103,37 @@ export const ReportsView: React.FC = () => {
       });
   }, [state.paymentsReceived, state.paymentAllocations, state.customers]);
 
+  // Crate Defaulters (crates to collect from customers)
+  const crateDefaulters = useMemo(() => {
+    return customerSummaries
+      .map(c => {
+        const totalHeld = Object.values(c.cratesHeld).reduce((a, b) => a + b, 0);
+        return { ...c, totalHeld };
+      })
+      .filter(c => c.totalHeld > 0)
+      .sort((a, b) => b.totalHeld - a.totalHeld);
+  }, [customerSummaries]);
+
+  const totalPendingBig = useMemo(() => {
+    return crateDefaulters.reduce((acc, c) => acc + (c.cratesHeld['big'] || 0), 0);
+  }, [crateDefaulters]);
+
+  const totalPendingSmall = useMemo(() => {
+    return crateDefaulters.reduce((acc, c) => acc + (c.cratesHeld['small'] || 0), 0);
+  }, [crateDefaulters]);
+
+  const totalPendingGrand = useMemo(() => {
+    return crateDefaulters.reduce((acc, c) => acc + c.totalHeld, 0);
+  }, [crateDefaulters]);
+
+  const handleDownloadPendingPdf = () => {
+    if (crateDefaulters.length === 0) {
+      alert(t('crates.noPendingCrates'));
+      return;
+    }
+    generateCustomerPendingCratesPdf(crateDefaulters, state.settings, language);
+  };
+
   const handleExportCurrentReport = () => {
     if (activeReport === 'profit') {
       const data = [
@@ -118,6 +152,12 @@ export const ReportsView: React.FC = () => {
       exportToExcel(lotPnlData, 'TSK_Lotwise_PnL_Report', 'LotPnL');
     } else if (activeReport === 'collection_split') {
       exportToExcel(collectionSplitData, 'TSK_Collection_Split_Report', 'CollectionSplit');
+    } else if (activeReport === 'pending_crates') {
+      if (crateDefaulters.length === 0) {
+        alert(t('crates.noPendingCrates'));
+        return;
+      }
+      exportCustomerPendingCratesExcel(crateDefaulters, state.settings.shopName);
     } else if (activeReport === 'sales_reg') {
       const data = state.sales.filter(s => !s.deletedAt).map(s => ({
         'Bill No': s.billNo,
@@ -158,17 +198,30 @@ export const ReportsView: React.FC = () => {
             <span>{t('nav.reports')}</span>
           </h2>
           <p className="text-xs text-slate-500">
-            Exportable to Excel & PDF • Verified Section 9A P&L & Registers
+            Exportable to Excel & PDF • Verified Section 9A P&L, Crate Ledgers & Registers
           </p>
         </div>
 
-        <button
-          onClick={handleExportCurrentReport}
-          className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
-        >
-          <Download className="w-4 h-4" />
-          <span>Export to Excel (.xlsx)</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          {activeReport === 'pending_crates' && (
+            <button
+              onClick={handleDownloadPendingPdf}
+              disabled={crateDefaulters.length === 0}
+              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-tomato hover:bg-rose-700 text-white font-extrabold text-xs shadow-md active:scale-95 disabled:opacity-50 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>{t('crates.downloadPdf')}</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleExportCurrentReport}
+            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export to Excel (.xlsx)</span>
+          </button>
+        </div>
       </div>
 
       {/* Report Switcher & Date Filters */}
@@ -178,6 +231,7 @@ export const ReportsView: React.FC = () => {
             { id: 'profit', label: 'Profit Report (Booked vs Realised)' },
             { id: 'lots', label: 'Lot-wise P&L' },
             { id: 'collection_split', label: 'Collection Split (Sec 9A)' },
+            { id: 'pending_crates', label: 'Crates to Collect (Pending)' },
             { id: 'sales_reg', label: 'Sales Register' },
             { id: 'purchase_reg', label: 'Purchase Register' }
           ].map(r => (
@@ -370,6 +424,117 @@ export const ReportsView: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* REPORT: CUSTOMER CRATES OUTSTANDING (PENDING TO COLLECT) */}
+      {activeReport === 'pending_crates' && (
+        <div className="space-y-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div className="bg-white border border-slate-200 p-4 rounded-3xl shadow-sm">
+              <span className="text-slate-500 font-semibold block text-[10px] uppercase">
+                {t('crates.totalCustomersHolding')}
+              </span>
+              <strong className="text-slate-900 font-black text-2xl">
+                {crateDefaulters.length}
+              </strong>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Customers with crates</span>
+            </div>
+
+            <div className="bg-rose-50 border border-rose-200 p-4 rounded-3xl shadow-sm">
+              <span className="text-rose-800 font-semibold block text-[10px] uppercase">
+                {t('crates.totalPendingBig')}
+              </span>
+              <strong className="text-rose-700 font-black text-2xl">
+                {totalPendingBig}
+              </strong>
+              <span className="text-[10px] text-rose-600 block mt-0.5">Big crates to collect</span>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-3xl shadow-sm">
+              <span className="text-amber-800 font-semibold block text-[10px] uppercase">
+                {t('crates.totalPendingSmall')}
+              </span>
+              <strong className="text-amber-700 font-black text-2xl">
+                {totalPendingSmall}
+              </strong>
+              <span className="text-[10px] text-amber-600 block mt-0.5">Small crates to collect</span>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-3xl shadow-sm">
+              <span className="text-emerald-800 font-semibold block text-[10px] uppercase">
+                {t('crates.totalPendingGrand')}
+              </span>
+              <strong className="text-emerald-950 font-black text-2xl">
+                {totalPendingGrand}
+              </strong>
+              <span className="text-[10px] text-emerald-700 block mt-0.5">Grand total crates</span>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-[11px] font-bold text-slate-600 uppercase">
+                  <tr>
+                    <th className="p-3 pl-4">#</th>
+                    <th className="p-3">Customer Name</th>
+                    <th className="p-3">Shop / Place</th>
+                    <th className="p-3">Phone</th>
+                    <th className="p-3 text-center">Big Crates</th>
+                    <th className="p-3 text-center">Small Crates</th>
+                    <th className="p-3 text-center text-rose-700">Total Crates</th>
+                    <th className="p-3 pr-4 text-right">Money Balance (₹)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {crateDefaulters.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-slate-400 font-medium">
+                        {t('crates.noPendingCrates')}
+                      </td>
+                    </tr>
+                  ) : (
+                    crateDefaulters.map((c, i) => (
+                      <tr key={c.customerId} className="hover:bg-slate-50">
+                        <td className="p-3 pl-4 font-mono text-slate-400">{i + 1}</td>
+                        <td className="p-3 font-bold text-slate-900">{c.customerName}</td>
+                        <td className="p-3 text-slate-500">{[c.shopName, c.place].filter(Boolean).join(' • ') || '-'}</td>
+                        <td className="p-3 font-mono text-slate-600">{c.phone}</td>
+                        <td className="p-3 text-center font-bold text-slate-800">{c.cratesHeld['big'] || 0}</td>
+                        <td className="p-3 text-center font-bold text-slate-800">{c.cratesHeld['small'] || 0}</td>
+                        <td className="p-3 text-center font-black text-rose-600 text-sm">{c.totalHeld}</td>
+                        <td className="p-3 pr-4 text-right font-bold text-slate-800">
+                          {c.currentBalance > 0 ? (
+                            <span className="text-rose-600">{formatINR(c.currentBalance)}</span>
+                          ) : (
+                            <span className="text-emerald-700">₹0.00</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+                {crateDefaulters.length > 0 && (
+                  <tfoot className="bg-slate-50 font-bold border-t border-slate-200">
+                    <tr>
+                      <td colSpan={4} className="p-3 pl-4 text-slate-700 uppercase">
+                        Total ({crateDefaulters.length} Customers)
+                      </td>
+                      <td className="p-3 text-center text-slate-900">{totalPendingBig}</td>
+                      <td className="p-3 text-center text-slate-900">{totalPendingSmall}</td>
+                      <td className="p-3 text-center text-rose-700 text-sm font-black">{totalPendingGrand}</td>
+                      <td className="p-3 pr-4 text-right text-slate-900">
+                        {formatINR(crateDefaulters.reduce((acc, c) => acc + (c.currentBalance || 0), 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
           </div>
         </div>
       )}
