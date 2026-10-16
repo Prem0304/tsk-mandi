@@ -58,7 +58,7 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
   onOpenReceivePayment
 }) => {
   const { t, language } = useI18n();
-  const { canSeeProfit, canEditOrDelete } = useAuth();
+  const { canSeeProfit, canEditOrDelete, requestActionAuthorization } = useAuth();
   const { state, customerSummaries } = useApp();
 
   const [showSplit, setShowSplit] = useState(false);
@@ -288,19 +288,25 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
       return;
     }
 
-    dbService.recordWriteoff({
-      id: `w-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      entryDate: getTodayDateString(),
-      customerId,
-      type: writeoffType,
-      amount: writeoffAmount,
-      reason: writeoffReason,
-      createdAt: new Date().toISOString()
-    });
+    requestActionAuthorization({
+      actionName: `Customer ${writeoffType === 'discount' ? 'Discount' : 'Bad Debt'} Write-off`,
+      actionDetails: `${customerObj.name} • ${formatINR(writeoffAmount)}`,
+      onConfirm: () => {
+        dbService.recordWriteoff({
+          id: `w-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          entryDate: getTodayDateString(),
+          customerId,
+          type: writeoffType,
+          amount: writeoffAmount,
+          reason: writeoffReason,
+          createdAt: new Date().toISOString()
+        });
 
-    setIsWriteoffModalOpen(false);
-    setWriteoffAmount(0);
-    setWriteoffReason('');
+        setIsWriteoffModalOpen(false);
+        setWriteoffAmount(0);
+        setWriteoffReason('');
+      }
+    });
   };
 
   return (

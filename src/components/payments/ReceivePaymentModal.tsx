@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, getTodayDateString } from '../../lib/utils';
@@ -24,6 +25,7 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
   defaultCustomerId
 }) => {
   const { t } = useI18n();
+  const { requestActionAuthorization } = useAuth();
   const { state, customerSummaries } = useApp();
 
   const [customerId, setCustomerId] = useState(defaultCustomerId || '');
@@ -102,8 +104,15 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      dbService.receivePayment(newPayment);
-      onClose();
+      const targetCust = customerSummaries.find(c => c.customerId === customerId);
+      requestActionAuthorization({
+        actionName: 'Receive Customer Payment',
+        actionDetails: `${targetCust?.customerName || 'Customer'} • ${formatINR(amount)} (${mode.toUpperCase()})`,
+        onConfirm: () => {
+          dbService.receivePayment(newPayment);
+          onClose();
+        }
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to save payment');
     }

@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, generateLotNo, getTodayDateString, formatDateWithDay } from '../../lib/utils';
@@ -29,6 +30,7 @@ export const PurchaseEntryModal: React.FC<PurchaseEntryModalProps> = ({
   onPurchaseSaved
 }) => {
   const { t, language } = useI18n();
+  const { requestActionAuthorization } = useAuth();
   const { state, supplierSummaries } = useApp();
 
   const [supplierId, setSupplierId] = useState('');
@@ -166,9 +168,16 @@ export const PurchaseEntryModal: React.FC<PurchaseEntryModalProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      dbService.recordPurchase(newPurchase);
-      onPurchaseSaved(newPurchase);
-      onClose();
+      const targetSupplier = supplierSummaries.find(s => s.supplierId === supplierId);
+      requestActionAuthorization({
+        actionName: `Save Purchase Inward #${billNo}`,
+        actionDetails: `${targetSupplier?.supplierName || 'Supplier'} • ${totalCrates} crates • Net: ${formatINR(netSupplierPayable)}`,
+        onConfirm: () => {
+          dbService.recordPurchase(newPurchase);
+          onPurchaseSaved(newPurchase);
+          onClose();
+        }
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to record purchase');
     }

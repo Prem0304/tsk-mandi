@@ -64,6 +64,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   billPrefix: 'TSK-',
   billPrintSize: 'thermal_80',
   appPin: '1234',
+  modificationPassword: '9999',
+  requirePasswordOnChange: true,
   expenseCategories: [
     'Transport',
     'Labour/Hamali',
@@ -157,6 +159,8 @@ class DatabaseService {
         if (!settings.godName1Ta) settings.godName1Ta = DEFAULT_SETTINGS.godName1Ta;
         if (!settings.godName2) settings.godName2 = DEFAULT_SETTINGS.godName2;
         if (!settings.godName2Ta) settings.godName2Ta = DEFAULT_SETTINGS.godName2Ta;
+        if (!settings.modificationPassword) settings.modificationPassword = DEFAULT_SETTINGS.modificationPassword;
+        if (settings.requirePasswordOnChange === undefined) settings.requirePasswordOnChange = true;
 
         return {
           ...parsed,

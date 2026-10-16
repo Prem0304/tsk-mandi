@@ -6,12 +6,22 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { UserRole } from '../types';
 import { dbService } from '../lib/db';
 
+export interface ActionAuthChallenge {
+  actionName: string;
+  actionDetails?: string;
+  onConfirm: () => void;
+}
+
 interface AuthContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   isLocked: boolean;
   lockApp: () => void;
   unlockWithPin: (pin: string) => boolean;
+  activeChallenge: ActionAuthChallenge | null;
+  requestActionAuthorization: (challenge: ActionAuthChallenge) => void;
+  cancelActionAuthorization: () => void;
+  verifyAndExecuteAction: (enteredPassword: string) => boolean;
   canCreateSales: boolean;
   canSeeProfit: boolean;
   canEditOrDelete: boolean;
@@ -26,9 +36,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [isLocked, setIsLocked] = useState<boolean>(() => {
-    // If appPin is set, default to unlocked unless locked explicitly or on mobile startup
-    return false;
+    // Start locked so application is password protected on entry
+    return true;
   });
+
+  const [activeChallenge, setActiveChallenge] = useState<ActionAuthChallenge | null>(null);
 
   const lastActivityRef = useRef<number>(Date.now());
 
@@ -78,6 +90,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [isLocked]);
 
+  const requestActionAuthorization = (challenge: ActionAuthChallenge) => {
+    const settings = dbService.getState().settings;
+    if (settings.requirePasswordOnChange === false) {
+      challenge.onConfirm();
+      return;
+    }
+    setActiveChallenge(challenge);
+  };
+
+  const cancelActionAuthorization = () => {
+    setActiveChallenge(null);
+  };
+
+  const verifyAndExecuteAction = (enteredPassword: string): boolean => {
+    const settings = dbService.getState().settings;
+    const targetPassword = settings.modificationPassword || '9999';
+    if (enteredPassword.trim() === targetPassword.trim()) {
+      if (activeChallenge) {
+        const actionToRun = activeChallenge.onConfirm;
+        setActiveChallenge(null);
+        setTimeout(() => actionToRun(), 50);
+      }
+      return true;
+    }
+    return false;
+  };
+
   // Role capability flags
   const canCreateSales = role === 'owner';
   const canSeeProfit = role === 'owner';
@@ -92,6 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLocked,
         lockApp,
         unlockWithPin,
+        activeChallenge,
+        requestActionAuthorization,
+        cancelActionAuthorization,
+        verifyAndExecuteAction,
         canCreateSales,
         canSeeProfit,
         canEditOrDelete,

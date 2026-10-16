@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, formatDate, getTodayDateString, formatDateWithDay } from '../../lib/utils';
@@ -23,6 +24,7 @@ import { TrendingUp, Save, History, Check, Calendar } from 'lucide-react';
 export const DailyRateBoardView: React.FC = () => {
   const { t, language } = useI18n();
   const { state } = useApp();
+  const { requestActionAuthorization } = useAuth();
 
   const todayStr = getTodayDateString();
   const todayEntry = state.dailyRates.find(r => r.rateDate === todayStr);
@@ -37,13 +39,19 @@ export const DailyRateBoardView: React.FC = () => {
   const [chartDays, setChartDays] = useState<7 | 30 | 90>(7);
 
   const handleSaveRates = () => {
-    dbService.setDailyRates(todayStr, {
-      big: { buying: bigBuying, selling: bigSelling },
-      small: { buying: smallBuying, selling: smallSelling }
-    }, notes);
+    requestActionAuthorization({
+      actionName: "Save Today's Base Rates",
+      actionDetails: `Big: ₹${bigSelling} (Buy: ₹${bigBuying}) • Small: ₹${smallSelling} (Buy: ₹${smallBuying})`,
+      onConfirm: () => {
+        dbService.setDailyRates(todayStr, {
+          big: { buying: bigBuying, selling: bigSelling },
+          small: { buying: smallBuying, selling: smallSelling }
+        }, notes);
 
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+      }
+    });
   };
 
   // Prepare price trend chart data

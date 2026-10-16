@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, generateBillNo, getTodayDateString, formatDateWithDay } from '../../lib/utils';
@@ -30,6 +31,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
   onSaleSaved
 }) => {
   const { t, language } = useI18n();
+  const { requestActionAuthorization } = useAuth();
   const { state, stockSummaries, customerSummaries } = useApp();
 
   const [customerId, setCustomerId] = useState('');
@@ -318,10 +320,17 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      // Atomic save to database
-      dbService.recordSale(newSale, paymentMode, paymentRef);
-      onSaleSaved(newSale);
-      onClose();
+      // Modification password protected save
+      const targetCustomer = customerSummaries.find(c => c.customerId === customerId);
+      requestActionAuthorization({
+        actionName: `Save Sale Bill #${billNo}`,
+        actionDetails: `${targetCustomer?.customerName || 'Customer'} • Total: ${formatINR(billTotal)}`,
+        onConfirm: () => {
+          dbService.recordSale(newSale, paymentMode, paymentRef);
+          onSaleSaved(newSale);
+          onClose();
+        }
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to record sale');
     }

@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, generateBillNo, getTodayDateString, formatDateWithDay } from '../../lib/utils';
@@ -25,6 +26,7 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
   onSaleSaved
 }) => {
   const { t, language } = useI18n();
+  const { requestActionAuthorization } = useAuth();
   const { state, customerSummaries } = useApp();
 
   const [customerId, setCustomerId] = useState('');
@@ -165,10 +167,17 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      dbService.recordSale(newSale, 'cash');
-      setLastSavedBill(`${billNo} (₹${subtotal}) saved!`);
-      onSaleSaved(newSale);
-      resetForm();
+      const targetCust = customerSummaries.find(c => c.customerId === customerId);
+      requestActionAuthorization({
+        actionName: `Quick Sale Bill #${billNo}`,
+        actionDetails: `${targetCust?.customerName || 'Customer'} • Total: ${formatINR(subtotal)}`,
+        onConfirm: () => {
+          dbService.recordSale(newSale, 'cash');
+          setLastSavedBill(`${billNo} (₹${subtotal}) saved!`);
+          onSaleSaved(newSale);
+          resetForm();
+        }
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Quick sale failed');
     }

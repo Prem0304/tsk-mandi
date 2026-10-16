@@ -349,7 +349,9 @@ export interface AppSettings {
   autoLockMinutes: number; // default 10
   billPrefix: string; // e.g. TSK-
   billPrintSize: 'a4' | 'a5' | 'thermal_58' | 'thermal_80';
-  appPin: string; // 4-digit PIN e.g. '1234'
+  appPin: string; // Password 1: App Access Password e.g. '1234'
+  modificationPassword: string; // Password 2: Action Modification Password e.g. '9999'
+  requirePasswordOnChange: boolean; // default true
   expenseCategories: string[];
 }
 

@@ -29,7 +29,7 @@ import {
 
 export const SettingsView: React.FC = () => {
   const { t, language, setLanguage } = useI18n();
-  const { role, setRole } = useAuth();
+  const { role, setRole, requestActionAuthorization } = useAuth();
   const { state } = useApp();
 
   // Settings form fields
@@ -53,7 +53,11 @@ export const SettingsView: React.FC = () => {
   const [crateAgingDays, setCrateAgingDays] = useState(state.settings.crateAgingDays);
   const [lowStockThreshold, setLowStockThreshold] = useState(state.settings.lowStockThreshold);
   const [autoLockMinutes, setAutoLockMinutes] = useState(state.settings.autoLockMinutes);
-  const [appPin, setAppPin] = useState(state.settings.appPin);
+  const [appPin, setAppPin] = useState(state.settings.appPin || '1234');
+  const [modificationPassword, setModificationPassword] = useState(state.settings.modificationPassword || '9999');
+  const [requirePasswordOnChange, setRequirePasswordOnChange] = useState(
+    state.settings.requirePasswordOnChange !== undefined ? state.settings.requirePasswordOnChange : true
+  );
   const [isSaved, setIsSaved] = useState(false);
 
   // Categories editor
@@ -62,32 +66,40 @@ export const SettingsView: React.FC = () => {
   const [newCatNameTa, setNewCatNameTa] = useState('');
 
   const handleSaveSettings = () => {
-    dbService.updateSettings({
-      shopName,
-      shopNameTa,
-      shopSubtitle,
-      shopSubtitleTa,
-      godName1,
-      godName1Ta,
-      godName2,
-      godName2Ta,
-      address,
-      phone,
-      altPhone,
-      upiId,
-      gstNumber: gstNumber || undefined,
-      billFooter,
-      billFooterTa,
-      paymentAllocationRule: paymentRule,
-      autoMarkSupplierPaid,
-      crateAgingDays,
-      lowStockThreshold,
-      autoLockMinutes,
-      appPin
-    });
+    requestActionAuthorization({
+      actionName: 'Save Mandi Configuration',
+      actionDetails: 'Save Mandi profile, rules, and password settings',
+      onConfirm: () => {
+        dbService.updateSettings({
+          shopName,
+          shopNameTa,
+          shopSubtitle,
+          shopSubtitleTa,
+          godName1,
+          godName1Ta,
+          godName2,
+          godName2Ta,
+          address,
+          phone,
+          altPhone,
+          upiId,
+          gstNumber: gstNumber || undefined,
+          billFooter,
+          billFooterTa,
+          paymentAllocationRule: paymentRule,
+          autoMarkSupplierPaid,
+          crateAgingDays,
+          lowStockThreshold,
+          autoLockMinutes,
+          appPin,
+          modificationPassword,
+          requirePasswordOnChange
+        });
 
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+      }
+    });
   };
 
   const handleAddCategory = () => {
@@ -321,7 +333,7 @@ export const SettingsView: React.FC = () => {
             />
           </div>
 
-          <div>
+          <div className="sm:col-span-2">
             <label className="font-bold text-slate-700 block mb-1">GST Number (Optional)</label>
             <input
               type="text"
@@ -329,18 +341,6 @@ export const SettingsView: React.FC = () => {
               onChange={e => setGstNumber(e.target.value)}
               placeholder="33AABCT1234D1Z5"
               className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="font-bold text-slate-700 block mb-1">App 4-Digit Unlock PIN</label>
-            <input
-              type="text"
-              maxLength={4}
-              value={appPin}
-              onChange={e => setAppPin(e.target.value)}
-              placeholder="1234"
-              className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono font-bold text-center tracking-widest text-sm"
             />
           </div>
         </div>
@@ -375,7 +375,85 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. SECTION 9A PAYMENT & PROFIT ALLOCATION RULES */}
+      {/* 2. SECURITY & DUAL-PASSWORD PROTECTION */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center space-x-2">
+          <Shield className="w-5 h-5 text-amber-600" />
+          <span>Security & Dual-Password Protection</span>
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          {/* Password 1: App Access */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="flex items-center space-x-2">
+              <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
+                1
+              </span>
+              <span className="font-bold text-slate-900 text-sm">
+                Password 1: App Access Password
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Required to open the application, view dashboards, passbooks, and reports.
+            </p>
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">App Access Password / PIN</label>
+              <input
+                type="text"
+                value={appPin}
+                onChange={e => setAppPin(e.target.value)}
+                placeholder="1234"
+                className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono font-bold tracking-widest text-center text-sm bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Password 2: Modification Password */}
+          <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+            <div className="flex items-center space-x-2">
+              <span className="w-6 h-6 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-xs">
+                2
+              </span>
+              <span className="font-bold text-amber-950 text-sm">
+                Password 2: Modification Password
+              </span>
+            </div>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Required before committing any transaction (sales, purchases, payments, rates).
+            </p>
+            <div>
+              <label className="font-bold text-amber-900 block mb-1">Transaction Modification Password</label>
+              <input
+                type="text"
+                value={modificationPassword}
+                onChange={e => setModificationPassword(e.target.value)}
+                placeholder="9999"
+                className="w-full h-10 px-3 rounded-xl border border-amber-300 font-mono font-bold tracking-widest text-center text-sm bg-white text-amber-950"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Require Password On Change Toggle */}
+        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+          <div>
+            <h4 className="font-bold text-slate-900 text-xs sm:text-sm">
+              Require Modification Password on every change
+            </h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              When enabled, the app asks for Password 2 whenever saving a sale, purchase, payment, or rate change.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            checked={requirePasswordOnChange}
+            onChange={e => setRequirePasswordOnChange(e.target.checked)}
+            className="w-5 h-5 accent-amber-600 rounded cursor-pointer"
+          />
+        </div>
+      </div>
+
+      {/* 3. SECTION 9A PAYMENT & PROFIT ALLOCATION RULES */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
         <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center space-x-2">
           <Layers className="w-5 h-5 text-amber-600" />

@@ -15,6 +15,7 @@ import { Header } from './components/layout/Header';
 import { BottomNav, NavTab } from './components/layout/BottomNav';
 import { Sidebar } from './components/layout/Sidebar';
 import { PinLockModal } from './components/layout/PinLockModal';
+import { ActionAuthModal } from './components/common/ActionAuthModal';
 import { GlobalSearchModal } from './components/layout/GlobalSearchModal';
 
 // Views
@@ -253,6 +254,7 @@ export const App: React.FC = () => {
 
       {/* Modals */}
       <PinLockModal />
+      <ActionAuthModal />
 
       <GlobalSearchModal
         isOpen={isSearchOpen}

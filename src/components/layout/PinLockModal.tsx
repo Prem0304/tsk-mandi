@@ -10,7 +10,7 @@ import { Lock, Delete, AlertCircle } from 'lucide-react';
 
 export const PinLockModal: React.FC = () => {
   const { isLocked, unlockWithPin } = useAuth();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
 
@@ -53,11 +53,11 @@ export const PinLockModal: React.FC = () => {
           <Lock className="w-8 h-8" />
         </div>
 
-        <h2 className="text-xl font-bold text-slate-900 mb-1">
-          {t('app.unlock')}
+        <h2 className="text-xl font-black text-slate-900 mb-1">
+          {language === 'ta' ? 'பயன்பாட்டு அணுகல் கடவுச்சொல்' : 'App Access Password'}
         </h2>
-        <p className="text-xs text-slate-500 mb-6">
-          TSK Tomato & Vegetable Mandi
+        <p className="text-xs font-semibold text-slate-500 mb-6">
+          T.S.K Tomato & Vegetable Mandi • (Password 1)
         </p>
 
         {/* 4 Pin Dots */}

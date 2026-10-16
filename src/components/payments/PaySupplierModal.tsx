@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
 import { formatINR, getTodayDateString } from '../../lib/utils';
@@ -23,6 +24,7 @@ export const PaySupplierModal: React.FC<PaySupplierModalProps> = ({
   defaultSupplierId
 }) => {
   const { t } = useI18n();
+  const { requestActionAuthorization } = useAuth();
   const { state, supplierSummaries } = useApp();
 
   const [supplierId, setSupplierId] = useState(defaultSupplierId || '');
@@ -86,8 +88,14 @@ export const PaySupplierModal: React.FC<PaySupplierModalProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      dbService.paySupplier(newPayment);
-      onClose();
+      requestActionAuthorization({
+        actionName: 'Pay Supplier (Settlement)',
+        actionDetails: `${selectedSupplier?.supplierName || 'Supplier'} • ${formatINR(amount)} (${mode.toUpperCase()})`,
+        onConfirm: () => {
+          dbService.paySupplier(newPayment);
+          onClose();
+        }
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to record supplier payment');
     }
