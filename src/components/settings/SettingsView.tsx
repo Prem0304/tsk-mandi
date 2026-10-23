@@ -56,6 +56,8 @@ export const SettingsView: React.FC = () => {
   const [crateAgingDays, setCrateAgingDays] = useState(state.settings.crateAgingDays);
   const [lowStockThreshold, setLowStockThreshold] = useState(state.settings.lowStockThreshold);
   const [autoLockMinutes, setAutoLockMinutes] = useState(state.settings.autoLockMinutes);
+  const [ownerPin, setOwnerPin] = useState(state.settings.ownerPin || state.settings.appPin || '1234');
+  const [staffPin, setStaffPin] = useState(state.settings.staffPin || '5678');
   const [appPin, setAppPin] = useState(state.settings.appPin || '1234');
   const [modificationPassword, setModificationPassword] = useState(state.settings.modificationPassword || '9999');
   const [requirePasswordOnChange, setRequirePasswordOnChange] = useState(
@@ -94,7 +96,9 @@ export const SettingsView: React.FC = () => {
           crateAgingDays,
           lowStockThreshold,
           autoLockMinutes,
-          appPin,
+          appPin: ownerPin,
+          ownerPin,
+          staffPin,
           modificationPassword,
           requirePasswordOnChange
         });
@@ -378,60 +382,87 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. SECURITY & DUAL-PASSWORD PROTECTION */}
+      {/* 2. SECURITY & 2-ROLE DUAL-PIN PROTECTION */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
         <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center space-x-2">
           <Shield className="w-5 h-5 text-amber-600" />
-          <span>Security & Dual-Password Protection</span>
+          <span>Security & 2-Role Dual-PIN Protection (உரிமையாளர் & பணியாளர்)</span>
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          {/* Password 1: App Access */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          {/* 1. Owner PIN */}
+          <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-300 space-y-2">
             <div className="flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
-                1
+              <span className="w-6 h-6 rounded-full bg-amber-700 text-white font-black flex items-center justify-center text-xs">
+                👑
               </span>
-              <span className="font-bold text-slate-900 text-sm">
-                Password 1: App Access Password
+              <span className="font-bold text-amber-950 text-sm">
+                Owner PIN (உரிமையாளர்)
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Required to open the application, view dashboards, passbooks, and reports.
+            <p className="text-[11px] text-amber-900/90 leading-relaxed">
+              Unlocks full owner control, live profit metrics, supplier payouts, and settings.
             </p>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">App Access Password / PIN</label>
+              <label className="font-bold text-amber-950 block mb-1">Owner 4-Digit PIN</label>
               <input
                 type="text"
-                value={appPin}
-                onChange={e => setAppPin(e.target.value)}
+                maxLength={6}
+                value={ownerPin}
+                onChange={e => setOwnerPin(e.target.value)}
                 placeholder="1234"
-                className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono font-bold tracking-widest text-center text-sm bg-white"
+                className="w-full h-10 px-3 rounded-xl border border-amber-400 font-mono font-black tracking-widest text-center text-base bg-white text-amber-950"
               />
             </div>
           </div>
 
-          {/* Password 2: Modification Password */}
-          <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+          {/* 2. Staff PIN */}
+          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-300 space-y-2">
             <div className="flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-xs">
-                2
+              <span className="w-6 h-6 rounded-full bg-emerald-700 text-white font-black flex items-center justify-center text-xs">
+                👤
               </span>
-              <span className="font-bold text-amber-950 text-sm">
-                Password 2: Modification Password
+              <span className="font-bold text-emerald-950 text-sm">
+                Staff PIN (பணியாளர்)
               </span>
             </div>
-            <p className="text-[11px] text-amber-800 leading-relaxed">
-              Required before committing any transaction (sales, purchases, payments, rates).
+            <p className="text-[11px] text-emerald-900/90 leading-relaxed">
+              Unlocks sales billing, customer collections, and crates. Wholesale profits strictly hidden.
             </p>
             <div>
-              <label className="font-bold text-amber-900 block mb-1">Transaction Modification Password</label>
+              <label className="font-bold text-emerald-950 block mb-1">Staff 4-Digit PIN</label>
+              <input
+                type="text"
+                maxLength={6}
+                value={staffPin}
+                onChange={e => setStaffPin(e.target.value)}
+                placeholder="5678"
+                className="w-full h-10 px-3 rounded-xl border border-emerald-400 font-mono font-black tracking-widest text-center text-base bg-white text-emerald-950"
+              />
+            </div>
+          </div>
+
+          {/* 3. Modification Password */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-300 space-y-2">
+            <div className="flex items-center space-x-2">
+              <span className="w-6 h-6 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-xs">
+                🔒
+              </span>
+              <span className="font-bold text-slate-900 text-sm">
+                Password 2: Modification
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Required before committing any transaction (sales, collections, crate returns, settings).
+            </p>
+            <div>
+              <label className="font-bold text-slate-800 block mb-1">Transaction Password</label>
               <input
                 type="text"
                 value={modificationPassword}
                 onChange={e => setModificationPassword(e.target.value)}
                 placeholder="9999"
-                className="w-full h-10 px-3 rounded-xl border border-amber-300 font-mono font-bold tracking-widest text-center text-sm bg-white text-amber-950"
+                className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono font-bold tracking-widest text-center text-base bg-white text-slate-900"
               />
             </div>
           </div>

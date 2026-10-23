@@ -113,8 +113,13 @@ export const PinLockModal: React.FC = () => {
           </button>
         </div>
 
-        <p className="text-[11px] text-slate-400 mt-2">
-          Default PIN: 1234 (Configurable in Settings)
+        <p className="text-[11px] text-slate-500 mt-2 font-medium">
+          {language === 'ta'
+            ? '👑 உரிமையாளர்: 1234 • 👤 பணியாளர்: 5678'
+            : '👑 Owner PIN: 1234 • 👤 Staff PIN: 5678'}
+        </p>
+        <p className="text-[10px] text-slate-400 mt-0.5">
+          {language === 'ta' ? '(அமைப்புகளில் மாற்றிக்கொள்ளலாம்)' : '(Configurable in Settings)'}
         </p>
 
       </div>

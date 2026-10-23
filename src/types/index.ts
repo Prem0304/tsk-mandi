@@ -2,7 +2,7 @@
 // TSK TOMATO AND VEGETABLE MANDI - TYPE DEFINITIONS
 // ============================================================================
 
-export type UserRole = 'owner' | 'entry_staff' | 'view_only';
+export type UserRole = 'owner' | 'staff' | 'entry_staff' | 'view_only';
 
 export type PaymentAllocationRule = 'supplier_first' | 'proportional';
 export type AllocationRuleMode = 'fifo' | 'manual';
@@ -350,6 +350,8 @@ export interface AppSettings {
   billPrefix: string; // e.g. TSK-
   billPrintSize: 'a4' | 'a5' | 'thermal_58' | 'thermal_80';
   appPin: string; // Password 1: App Access Password e.g. '1234'
+  ownerPin?: string; // Owner PIN e.g. '1234' (Unlocks full owner mode & profits)
+  staffPin?: string; // Staff PIN e.g. '5678' (Unlocks counter billing & collections mode)
   modificationPassword: string; // Password 2: Action Modification Password e.g. '9999'
   requirePasswordOnChange: boolean; // default true
   expenseCategories: string[];

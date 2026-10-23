@@ -43,6 +43,7 @@ import { CustomerCollectionModal } from './components/payments/CustomerCollectio
 
 export const App: React.FC = () => {
   const { state } = useApp();
+  const { role } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -187,18 +188,34 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'purchase' && (
-            <div className="p-4">
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4 max-w-md mx-auto my-8">
-                <h3 className="text-lg font-bold text-slate-900">Stock Inward Purchase</h3>
-                <p className="text-xs text-slate-500">Record fresh crate arrivals, transport charges, and create stock lots</p>
+            role === 'owner' ? (
+              <div className="p-4">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4 max-w-md mx-auto my-8">
+                  <h3 className="text-lg font-bold text-slate-900">Stock Inward Purchase</h3>
+                  <p className="text-xs text-slate-500">Record fresh crate arrivals, transport charges, and create stock lots</p>
+                  <button
+                    onClick={() => setIsPurchaseModalOpen(true)}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl shadow-lg active:scale-95 transition-all"
+                  >
+                    Open Purchase Entry Modal
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+                  👑
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Owner Access Required</h3>
+                <p className="text-xs text-slate-500">Inward stock purchase is restricted to the shop owner.</p>
                 <button
-                  onClick={() => setIsPurchaseModalOpen(true)}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl shadow-lg active:scale-95 transition-all"
+                  onClick={() => setActiveTab('dashboard')}
+                  className="px-4 py-2 bg-tomato text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-sm"
                 >
-                  Open Purchase Entry Modal
+                  Return to Dashboard
                 </button>
               </div>
-            </div>
+            )
           )}
 
           {activeTab === 'passbook' && (
@@ -224,12 +241,28 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'suppliers' && (
-            <SupplierListView
-              onOpenPaySupplier={(sId) => {
-                setActiveSupplierIdForPay(sId);
-                setIsPaySupplierModalOpen(true);
-              }}
-            />
+            role === 'owner' ? (
+              <SupplierListView
+                onOpenPaySupplier={(sId) => {
+                  setActiveSupplierIdForPay(sId);
+                  setIsPaySupplierModalOpen(true);
+                }}
+              />
+            ) : (
+              <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+                  👑
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Owner Access Required</h3>
+                <p className="text-xs text-slate-500">Supplier accounts and payouts are restricted to the shop owner.</p>
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className="px-4 py-2 bg-tomato text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-sm"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === 'crates' && (
@@ -249,15 +282,63 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'reports' && (
-            <ReportsView />
+            role === 'owner' ? (
+              <ReportsView />
+            ) : (
+              <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+                  👑
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Owner Access Required</h3>
+                <p className="text-xs text-slate-500">Financial P&L reports are restricted to the shop owner.</p>
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className="px-4 py-2 bg-tomato text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-sm"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === 'settings' && (
-            <SettingsView />
+            role === 'owner' ? (
+              <SettingsView />
+            ) : (
+              <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+                  👑
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Owner Access Required</h3>
+                <p className="text-xs text-slate-500">Shop settings and password configurations are restricted to the shop owner.</p>
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className="px-4 py-2 bg-tomato text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-sm"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === 'audit' && (
-            <AuditLogView />
+            role === 'owner' ? (
+              <AuditLogView />
+            ) : (
+              <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+                  👑
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Owner Access Required</h3>
+                <p className="text-xs text-slate-500">Security audit logs are restricted to the shop owner.</p>
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className="px-4 py-2 bg-tomato text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow-sm"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            )
           )}
         </main>
       </div>

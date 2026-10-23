@@ -6,7 +6,7 @@
 import React from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingCart, Truck, BookOpen, Menu } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Truck, BookOpen, Menu, Box } from 'lucide-react';
 
 export type NavTab = 
   | 'dashboard' 
@@ -32,7 +32,7 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, onOpenMore }) => {
   const { t } = useI18n();
-  const { canCreateSales } = useAuth();
+  const { role, canCreateSales } = useAuth();
 
   const isMoreActive = ['suppliers', 'customers', 'crates', 'rates', 'expenses', 'cashBook', 'reports', 'settings', 'audit'].includes(activeTab);
 
@@ -55,19 +55,34 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, on
           </span>
         </button>
 
-        {/* Sale (Owner Only) */}
-        {canCreateSales ? (
+        {/* Sale */}
+        <button
+          onClick={() => onSelectTab('sale')}
+          className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
+            activeTab === 'sale'
+              ? 'text-tomato font-bold bg-rose-50'
+              : 'text-slate-600 font-medium hover:text-slate-900'
+          }`}
+        >
+          <ShoppingCart className={`w-5 h-5 ${activeTab === 'sale' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+          <span className="text-[11px] mt-0.5 tracking-tight truncate max-w-full">
+            {t('nav.sale')}
+          </span>
+        </button>
+
+        {/* Purchase (Owner Only) or Crates (Staff Mode) */}
+        {role === 'owner' ? (
           <button
-            onClick={() => onSelectTab('sale')}
+            onClick={() => onSelectTab('purchase')}
             className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
-              activeTab === 'sale'
+              activeTab === 'purchase'
                 ? 'text-tomato font-bold bg-rose-50'
                 : 'text-slate-600 font-medium hover:text-slate-900'
             }`}
           >
-            <ShoppingCart className={`w-5 h-5 ${activeTab === 'sale' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+            <Truck className={`w-5 h-5 ${activeTab === 'purchase' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
             <span className="text-[11px] mt-0.5 tracking-tight truncate max-w-full">
-              {t('nav.sale')}
+              {t('nav.purchase')}
             </span>
           </button>
         ) : (
@@ -79,26 +94,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, on
                 : 'text-slate-600 font-medium hover:text-slate-900'
             }`}
           >
+            <Box className={`w-5 h-5 ${activeTab === 'crates' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
             <span className="text-[11px] mt-0.5 tracking-tight truncate max-w-full">
               {t('nav.crates')}
             </span>
           </button>
         )}
-
-        {/* Purchase */}
-        <button
-          onClick={() => onSelectTab('purchase')}
-          className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
-            activeTab === 'purchase'
-              ? 'text-tomato font-bold bg-rose-50'
-              : 'text-slate-600 font-medium hover:text-slate-900'
-          }`}
-        >
-          <Truck className={`w-5 h-5 ${activeTab === 'purchase' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-          <span className="text-[11px] mt-0.5 tracking-tight truncate max-w-full">
-            {t('nav.purchase')}
-          </span>
-        </button>
 
         {/* Passbook */}
         <button

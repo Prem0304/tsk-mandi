@@ -18,12 +18,18 @@ interface AuthContextType {
   isLocked: boolean;
   lockApp: () => void;
   unlockWithPin: (pin: string) => boolean;
+  switchToStaff: () => void;
+  switchToOwner: (pin: string) => boolean;
   activeChallenge: ActionAuthChallenge | null;
   requestActionAuthorization: (challenge: ActionAuthChallenge) => void;
   cancelActionAuthorization: () => void;
   verifyAndExecuteAction: (enteredPassword: string) => boolean;
   canCreateSales: boolean;
   canSeeProfit: boolean;
+  canRecordPurchases: boolean;
+  canPaySuppliers: boolean;
+  canManageSettings: boolean;
+  canViewReports: boolean;
   canEditOrDelete: boolean;
   canRecordCratesAndPayments: boolean;
 }
@@ -55,10 +61,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const unlockWithPin = (enteredPin: string): boolean => {
     const settings = dbService.getState().settings;
-    const targetPin = settings.appPin || '1234';
-    if (enteredPin === targetPin) {
+    const ownerPin = settings.ownerPin || settings.appPin || '1234';
+    const staffPin = settings.staffPin || '5678';
+
+    if (enteredPin.trim() === ownerPin.trim()) {
+      setRole('owner');
       setIsLocked(false);
       lastActivityRef.current = Date.now();
+      return true;
+    }
+
+    if (enteredPin.trim() === staffPin.trim()) {
+      setRole('staff');
+      setIsLocked(false);
+      lastActivityRef.current = Date.now();
+      return true;
+    }
+
+    return false;
+  };
+
+  const switchToStaff = () => {
+    setRole('staff');
+  };
+
+  const switchToOwner = (enteredPin: string): boolean => {
+    const settings = dbService.getState().settings;
+    const ownerPin = settings.ownerPin || settings.appPin || '1234';
+    if (enteredPin.trim() === ownerPin.trim()) {
+      setRole('owner');
       return true;
     }
     return false;
@@ -117,11 +148,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  // Role capability flags
-  const canCreateSales = role === 'owner';
-  const canSeeProfit = role === 'owner';
-  const canEditOrDelete = role === 'owner';
-  const canRecordCratesAndPayments = role === 'owner' || role === 'entry_staff';
+  // Role capability flags (Owner vs Staff)
+  const isOwner = role === 'owner';
+  const canSeeProfit = isOwner;
+  const canCreateSales = true; // Both Owner and Staff can create sales & quick sales!
+  const canRecordPurchases = isOwner; // Only owner buys stock from farmers/suppliers
+  const canPaySuppliers = isOwner; // Only owner pays suppliers
+  const canManageSettings = isOwner; // Only owner manages settings and passwords
+  const canViewReports = isOwner; // Only owner views P&L / audit reports
+  const canEditOrDelete = isOwner; // Only owner can edit/delete transactions
+  const canRecordCratesAndPayments = true; // Both can record crate returns and customer payments
 
   return (
     <AuthContext.Provider
@@ -131,12 +167,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLocked,
         lockApp,
         unlockWithPin,
+        switchToStaff,
+        switchToOwner,
         activeChallenge,
         requestActionAuthorization,
         cancelActionAuthorization,
         verifyAndExecuteAction,
         canCreateSales,
         canSeeProfit,
+        canRecordPurchases,
+        canPaySuppliers,
+        canManageSettings,
+        canViewReports,
         canEditOrDelete,
         canRecordCratesAndPayments
       }}

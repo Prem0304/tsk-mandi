@@ -312,55 +312,57 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       )}
 
-      {/* SUPPLIER MONEY CARDS (SECTION 8 & 9A) */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
-          <DollarSign className="w-4 h-4 text-amber-600" />
-          <span>{t('dashboard.supplierMoney')}</span>
-        </h3>
+      {/* SUPPLIER MONEY CARDS (SECTION 8 & 9A) - OWNER ONLY */}
+      {canSeeProfit && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
+            <DollarSign className="w-4 h-4 text-amber-600" />
+            <span>{t('dashboard.supplierMoney')}</span>
+          </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          
-          {/* Money in Hand for Suppliers */}
-          <div className="bg-amber-50 border-2 border-amber-300 p-4 rounded-2xl shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-800">{t('dashboard.moneyInHand')}</span>
-              <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
-                Collected
-              </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            
+            {/* Money in Hand for Suppliers */}
+            <div className="bg-amber-50 border-2 border-amber-300 p-4 rounded-2xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-800">{t('dashboard.moneyInHand')}</span>
+                <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
+                  Collected
+                </span>
+              </div>
+              <div className={`text-2xl font-black text-amber-950 mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(totalMoneyInHandForSuppliers)}
+              </div>
+              <p className="text-[11px] text-amber-700 mt-1">
+                Collected from customers, ready to pay out to suppliers
+              </p>
             </div>
-            <div className={`text-2xl font-black text-amber-950 mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
-              {privacyActive ? '••••••' : formatINR(totalMoneyInHandForSuppliers)}
+
+            {/* Dues Still to Collect */}
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-sm">
+              <span className="text-xs font-semibold text-slate-600">{t('dashboard.stillToCollect')}</span>
+              <div className="text-2xl font-black text-slate-800 mt-1">
+                {formatINR(totalStillToCollectFromCust)}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Supplier cost still pending with customers
+              </p>
             </div>
-            <p className="text-[11px] text-amber-700 mt-1">
-              Collected from customers, ready to pay out to suppliers
-            </p>
+
+            {/* Total Supplier Dues */}
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-sm">
+              <span className="text-xs font-semibold text-slate-600">{t('dashboard.totalPayable')}</span>
+              <div className="text-2xl font-black text-rose-700 mt-1">
+                {formatINR(totalSupplierPayable)}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Total balance owed to suppliers
+              </p>
+            </div>
+
           </div>
-
-          {/* Dues Still to Collect */}
-          <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-sm">
-            <span className="text-xs font-semibold text-slate-600">{t('dashboard.stillToCollect')}</span>
-            <div className="text-2xl font-black text-slate-800 mt-1">
-              {formatINR(totalStillToCollectFromCust)}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Supplier cost still pending with customers
-            </p>
-          </div>
-
-          {/* Total Supplier Dues */}
-          <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-sm">
-            <span className="text-xs font-semibold text-slate-600">{t('dashboard.totalPayable')}</span>
-            <div className="text-2xl font-black text-rose-700 mt-1">
-              {formatINR(totalSupplierPayable)}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Total balance owed to suppliers
-            </p>
-          </div>
-
         </div>
-      </div>
+      )}
 
       {/* LIVE TOMATO STOCK & CRATE ACCOUNTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -568,13 +570,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </button>
             )}
 
-            <button
-              onClick={() => { setIsFabOpen(false); onOpenPurchase(); }}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-3.5 py-2 rounded-full shadow-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all"
-            >
-              <Truck className="w-4 h-4" />
-              <span>{t('nav.purchase')}</span>
-            </button>
+            {canSeeProfit && (
+              <button
+                onClick={() => { setIsFabOpen(false); onOpenPurchase(); }}
+                className="flex items-center space-x-2 bg-blue-600 text-white px-3.5 py-2 rounded-full shadow-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all"
+              >
+                <Truck className="w-4 h-4" />
+                <span>{t('nav.purchase')}</span>
+              </button>
+            )}
 
             <button
               onClick={() => { setIsFabOpen(false); onOpenReceivePayment(); }}
@@ -584,13 +588,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>{t('payments.receivePayment')}</span>
             </button>
 
-            <button
-              onClick={() => { setIsFabOpen(false); onOpenPaySupplier(); }}
-              className="flex items-center space-x-2 bg-indigo-600 text-white px-3.5 py-2 rounded-full shadow-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all"
-            >
-              <ArrowUpRight className="w-4 h-4" />
-              <span>{t('payments.paySupplier')}</span>
-            </button>
+            {canSeeProfit && (
+              <button
+                onClick={() => { setIsFabOpen(false); onOpenPaySupplier(); }}
+                className="flex items-center space-x-2 bg-indigo-600 text-white px-3.5 py-2 rounded-full shadow-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all"
+              >
+                <ArrowUpRight className="w-4 h-4" />
+                <span>{t('payments.paySupplier')}</span>
+              </button>
+            )}
 
             <button
               onClick={() => { setIsFabOpen(false); onOpenCrateReturn(); }}
