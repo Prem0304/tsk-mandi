@@ -152,3 +152,62 @@ export function shareDailyOwnerSummaryWhatsApp(
 
   openWhatsAppLink(settings.phone, msg);
 }
+
+/**
+ * WhatsApp Share for Customer Payment Receipt (Receipt Confirmation)
+ */
+export function shareCustomerPaymentReceiptWhatsApp(
+  customer: Customer,
+  amount: number,
+  mode: string,
+  referenceNo: string | undefined,
+  cratesReturned: { big: number; small: number },
+  previousBalance: number,
+  newBalance: number,
+  cratesHeld: Record<string, number>,
+  settings: AppSettings,
+  language: 'en' | 'ta'
+) {
+  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : settings.shopName;
+  const today = formatDateWithDay(new Date(), language, true);
+  const bigRemaining = cratesHeld['big'] || 0;
+  const smallRemaining = cratesHeld['small'] || 0;
+
+  let message = '';
+  if (language === 'ta') {
+    message = `*${shopName}*\n` +
+      `கடை எண் 30, காமராஜர் மார்க்கெட், தேவாரம்\n` +
+      `------------------------------------\n` +
+      `*பணம் செலுத்திய ரசீது (Payment Receipt)*\n` +
+      `தேதி: *${today}*\n` +
+      `வாடிக்கையாளர்: *${customer.name}* ${customer.shopName ? `(${customer.shopName})` : ''}\n\n` +
+      `பெற்ற தொகை: *${formatINR(amount)}* (${mode === 'cash' ? 'ரொக்கம்' : mode.toUpperCase()})\n` +
+      (referenceNo ? `குறிப்பு எண்: ${referenceNo}\n` : '') +
+      ((cratesReturned.big > 0 || cratesReturned.small > 0) ? `திருப்பி அளித்த காலி பெட்டிகள்: *பெரியது ${cratesReturned.big}, சிறியது ${cratesReturned.small}*\n` : '') +
+      `------------------------------------\n` +
+      `முந்தைய பாக்கி: ${formatINR(previousBalance)}\n` +
+      `*தற்போதைய நிகர பாக்கி: ${formatINR(newBalance)}*\n` +
+      `தங்களிடம் உள்ள காலி பெட்டிகள்: *பெரியது ${bigRemaining}, சிறியது ${smallRemaining}*\n` +
+      `------------------------------------\n` +
+      `நன்றி! வணக்கம்!`;
+  } else {
+    message = `*${shopName}*\n` +
+      `Shop no 30, Kamarajar Market, Thevaram\n` +
+      `------------------------------------\n` +
+      `*PAYMENT RECEIPT*\n` +
+      `Date: *${today}*\n` +
+      `Customer: *${customer.name}* ${customer.shopName ? `(${customer.shopName})` : ''}\n\n` +
+      `Amount Received: *${formatINR(amount)}* (${mode.toUpperCase()})\n` +
+      (referenceNo ? `Ref No: ${referenceNo}\n` : '') +
+      ((cratesReturned.big > 0 || cratesReturned.small > 0) ? `Crates Returned: *Big ${cratesReturned.big}, Small ${cratesReturned.small}*\n` : '') +
+      `------------------------------------\n` +
+      `Previous Due: ${formatINR(previousBalance)}\n` +
+      `*New Remaining Due: ${formatINR(newBalance)}*\n` +
+      `Pending Crates with you: *Big ${bigRemaining}, Small ${smallRemaining}*\n` +
+      `------------------------------------\n` +
+      `Thank you for your prompt payment!`;
+  }
+
+  openWhatsAppLink(customer.phone, message);
+}
+

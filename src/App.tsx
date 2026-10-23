@@ -39,6 +39,7 @@ import { BillPrintModal } from './components/sales/BillPrintModal';
 import { PurchaseEntryModal } from './components/purchases/PurchaseEntryModal';
 import { ReceivePaymentModal } from './components/payments/ReceivePaymentModal';
 import { PaySupplierModal } from './components/payments/PaySupplierModal';
+import { CustomerCollectionModal } from './components/payments/CustomerCollectionModal';
 
 export const App: React.FC = () => {
   const { state } = useApp();
@@ -46,6 +47,9 @@ export const App: React.FC = () => {
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isIosInstallOpen, setIsIosInstallOpen] = useState(false);
+
+  // Counter Privacy Mode (shields profits on dashboard)
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
 
   // Active Customer Passbook state (when a customer is clicked)
   const [selectedCustomerIdForPassbook, setSelectedCustomerIdForPassbook] = useState<string | null>(null);
@@ -55,9 +59,11 @@ export const App: React.FC = () => {
   const [isQuickSaleModalOpen, setIsQuickSaleModalOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isReceivePaymentModalOpen, setIsReceivePaymentModalOpen] = useState(false);
+  const [isCustomerCollectionOpen, setIsCustomerCollectionOpen] = useState(false);
   const [isPaySupplierModalOpen, setIsPaySupplierModalOpen] = useState(false);
   const [activeSupplierIdForPay, setActiveSupplierIdForPay] = useState<string | undefined>(undefined);
   const [activeCustomerIdForPay, setActiveCustomerIdForPay] = useState<string | undefined>(undefined);
+  const [activeCustomerIdForCollection, setActiveCustomerIdForCollection] = useState<string | undefined>(undefined);
 
   // Bill print modal after sale is saved
   const [printedSale, setPrintedSale] = useState<Sale | null>(null);
@@ -97,6 +103,12 @@ export const App: React.FC = () => {
       <Header
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenInstall={() => setIsIosInstallOpen(true)}
+        onOpenCollection={() => {
+          setActiveCustomerIdForCollection(undefined);
+          setIsCustomerCollectionOpen(true);
+        }}
+        isPrivacyMode={isPrivacyMode}
+        onTogglePrivacy={() => setIsPrivacyMode(!isPrivacyMode)}
       />
 
       {/* Main Content Area: Sidebar on Desktop + View Body */}
@@ -135,6 +147,12 @@ export const App: React.FC = () => {
               onOpenExpense={() => setActiveTab('expenses')}
               onSelectCustomer={handleSelectCustomer}
               onSelectSupplier={handleSelectSupplier}
+              onOpenCollection={() => {
+                setActiveCustomerIdForCollection(undefined);
+                setIsCustomerCollectionOpen(true);
+              }}
+              isPrivacyMode={isPrivacyMode}
+              onTogglePrivacy={() => setIsPrivacyMode(!isPrivacyMode)}
             />
           )}
 
@@ -192,8 +210,8 @@ export const App: React.FC = () => {
                   setActiveTab('customers');
                 }}
                 onOpenReceivePayment={(cId) => {
-                  setActiveCustomerIdForPay(cId);
-                  setIsReceivePaymentModalOpen(true);
+                  setActiveCustomerIdForCollection(cId);
+                  setIsCustomerCollectionOpen(true);
                 }}
               />
             ) : (
@@ -281,6 +299,13 @@ export const App: React.FC = () => {
         isOpen={isReceivePaymentModalOpen}
         onClose={() => setIsReceivePaymentModalOpen(false)}
         defaultCustomerId={activeCustomerIdForPay}
+      />
+
+      {/* Shielded Customer Collection Modal (Zero Profit/Cost Visible) */}
+      <CustomerCollectionModal
+        isOpen={isCustomerCollectionOpen}
+        onClose={() => setIsCustomerCollectionOpen(false)}
+        defaultCustomerId={activeCustomerIdForCollection}
       />
 
       <PaySupplierModal

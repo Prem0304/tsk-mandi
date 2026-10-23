@@ -24,7 +24,11 @@ import {
   Clock,
   CheckCircle2,
   Users,
-  Download
+  Download,
+  Coins,
+  Eye,
+  EyeOff,
+  Shield
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -37,6 +41,9 @@ interface DashboardViewProps {
   onOpenExpense: () => void;
   onSelectCustomer: (id: string) => void;
   onSelectSupplier: (id: string) => void;
+  onOpenCollection?: () => void;
+  isPrivacyMode?: boolean;
+  onTogglePrivacy?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -48,10 +55,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenCrateReturn,
   onOpenExpense,
   onSelectCustomer,
-  onSelectSupplier
+  onSelectSupplier,
+  onOpenCollection,
+  isPrivacyMode,
+  onTogglePrivacy
 }) => {
   const { t, language } = useI18n();
   const { canSeeProfit, canCreateSales } = useAuth();
+  const [internalPrivacy, setInternalPrivacy] = useState(false);
+  const privacyActive = isPrivacyMode !== undefined ? isPrivacyMode : internalPrivacy;
+  const togglePrivacy = () => {
+    if (onTogglePrivacy) onTogglePrivacy();
+    else setInternalPrivacy(!internalPrivacy);
+  };
   const {
     state,
     stockSummaries,
@@ -146,15 +162,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </h2>
         </div>
 
-        {canSeeProfit && (
-          <button
-            onClick={handleShareEodSummary}
-            className="flex items-center justify-center space-x-2 bg-white text-tomato hover:bg-rose-50 px-3.5 py-2 rounded-xl font-bold text-xs shadow transition-all active:scale-95 shrink-0"
-          >
-            <Share2 className="w-4 h-4 text-emerald-600" />
-            <span>Share Daily Summary (WhatsApp)</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-2 shrink-0">
+          {onOpenCollection && (
+            <button
+              onClick={onOpenCollection}
+              className="flex items-center justify-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 border border-emerald-400/40"
+              title={language === 'ta' ? 'வாடிக்கையாளர் வசூல்' : 'Collect Money'}
+            >
+              <Coins className="w-4 h-4 text-emerald-100" />
+              <span>{language === 'ta' ? 'வாடிக்கையாளர் வசூல்' : 'Collect Money'}</span>
+            </button>
+          )}
+
+          {canSeeProfit && (
+            <button
+              onClick={handleShareEodSummary}
+              className="flex items-center justify-center space-x-2 bg-white text-tomato hover:bg-rose-50 px-3.5 py-2 rounded-xl font-bold text-xs shadow transition-all active:scale-95 shrink-0"
+            >
+              <Share2 className="w-4 h-4 text-emerald-600" />
+              <span className="hidden sm:inline">Share Daily Summary (WhatsApp)</span>
+              <span className="sm:hidden">Share EOD</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TODAY'S METRICS STRIP */}
@@ -221,18 +251,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* PROFIT REALIZATION CARDS (SECTION 9A & 13) - OWNER ONLY */}
       {canSeeProfit && (
         <div className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-            <span>{t('dashboard.profitOverview')} (Section 9A)</span>
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+              <span>{t('dashboard.profitOverview')} (Section 9A)</span>
+            </h3>
+
+            {/* Privacy Shield Toggle Button */}
+            <button
+              type="button"
+              onClick={togglePrivacy}
+              className={`flex items-center space-x-1.5 text-xs font-bold px-2.5 py-1 rounded-xl border transition-all ${
+                privacyActive
+                  ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-inner'
+                  : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600 shadow-xs'
+              }`}
+              title={privacyActive ? 'Privacy Active (Profits hidden)' : 'Counter Shield (Click to mask profits)'}
+            >
+              {privacyActive ? <EyeOff className="w-3.5 h-3.5 text-amber-800" /> : <Eye className="w-3.5 h-3.5 text-slate-500" />}
+              <span>{privacyActive ? (language === 'ta' ? 'ரகசிய முறை இயக்கத்தில்' : 'Shield ON') : (language === 'ta' ? 'ரகசிய முறை' : 'Shield Profit')}</span>
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             
             {/* Booked Profit */}
             <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-4 rounded-2xl shadow-sm">
               <span className="text-xs text-emerald-100 font-semibold">{t('dashboard.bookedProfit')}</span>
-              <div className="text-2xl font-black mt-1">
-                {formatINR(profitMetrics.bookedProfit)}
+              <div className={`text-2xl font-black mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(profitMetrics.bookedProfit)}
               </div>
               <p className="text-[11px] text-emerald-100/90 mt-1">
                 Sales − FIFO Cost − Wastage − Expenses − Discounts
@@ -242,8 +289,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Realised Profit (Cash Collected) */}
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-4 rounded-2xl shadow-sm">
               <span className="text-xs text-blue-100 font-semibold">{t('dashboard.realisedProfit')}</span>
-              <div className="text-2xl font-black mt-1">
-                {formatINR(profitMetrics.realisedProfit)}
+              <div className={`text-2xl font-black mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(profitMetrics.realisedProfit)}
               </div>
               <p className="text-[11px] text-blue-100/90 mt-1">
                 Actual profit share collected from payments
@@ -253,8 +300,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Pending Profit */}
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4 rounded-2xl shadow-sm">
               <span className="text-xs text-amber-100 font-semibold">{t('dashboard.pendingProfit')}</span>
-              <div className="text-2xl font-black mt-1">
-                {formatINR(profitMetrics.pendingProfit)}
+              <div className={`text-2xl font-black mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(profitMetrics.pendingProfit)}
               </div>
               <p className="text-[11px] text-amber-100/90 mt-1">
                 Booked profit locked in customer credit
@@ -282,8 +329,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Collected
               </span>
             </div>
-            <div className="text-2xl font-black text-amber-950 mt-1">
-              {formatINR(totalMoneyInHandForSuppliers)}
+            <div className={`text-2xl font-black text-amber-950 mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+              {privacyActive ? '••••••' : formatINR(totalMoneyInHandForSuppliers)}
             </div>
             <p className="text-[11px] text-amber-700 mt-1">
               Collected from customers, ready to pay out to suppliers
@@ -509,6 +556,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span>{t('nav.quickSale')}</span>
                 </button>
               </>
+            )}
+
+            {onOpenCollection && (
+              <button
+                onClick={() => { setIsFabOpen(false); onOpenCollection(); }}
+                className="flex items-center space-x-2 bg-emerald-600 text-white px-3.5 py-2 rounded-full shadow-lg text-xs font-black hover:brightness-110 active:scale-95 transition-all border border-emerald-400/40"
+              >
+                <Coins className="w-4 h-4 text-emerald-200" />
+                <span>{language === 'ta' ? 'வாடிக்கையாளர் வசூல்' : 'Collect Money'}</span>
+              </button>
             )}
 
             <button

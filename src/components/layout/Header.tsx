@@ -6,16 +6,25 @@ import React from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff, Calendar, Smartphone } from 'lucide-react';
+import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff, Calendar, Smartphone, Coins, Eye, EyeOff } from 'lucide-react';
 import { formatDateWithDay } from '../../lib/utils';
 import { isStandaloneApp, isIosDevice } from '../common/IosInstallPrompt';
 
 interface HeaderProps {
   onOpenSearch: () => void;
   onOpenInstall?: () => void;
+  onOpenCollection?: () => void;
+  isPrivacyMode?: boolean;
+  onTogglePrivacy?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenInstall }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onOpenSearch,
+  onOpenInstall,
+  onOpenCollection,
+  isPrivacyMode = false,
+  onTogglePrivacy
+}) => {
   const { language, setLanguage, t } = useI18n();
   const { role, lockApp } = useAuth();
   const { state, syncState, triggerManualSync } = useApp();
@@ -61,6 +70,33 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenInstall }) =
         {/* Action Controls */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           
+          {/* Quick Customer Collection (Shielded Mode) */}
+          {onOpenCollection && (
+            <button
+              onClick={onOpenCollection}
+              className="px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center space-x-1 font-black text-xs shadow-sm border border-emerald-400/50 transition-all"
+              title={language === 'ta' ? 'வாடிக்கையாளர் வசூல் (ரகசிய முறை)' : 'Collect Money (Shielded Counter Mode)'}
+            >
+              <Coins className="w-3.5 h-3.5 text-emerald-100" />
+              <span>{language === 'ta' ? 'வசூல்' : 'Collect'}</span>
+            </button>
+          )}
+
+          {/* Privacy Eye Toggle (Owner Only) */}
+          {role === 'owner' && onTogglePrivacy && (
+            <button
+              onClick={onTogglePrivacy}
+              className={`p-1.5 rounded-lg active:scale-95 transition-all border ${
+                isPrivacyMode
+                  ? 'bg-amber-400/30 border-amber-300 text-amber-200 shadow-inner'
+                  : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/90'
+              }`}
+              title={isPrivacyMode ? 'Privacy Shield ON (Profits masked)' : 'Privacy Shield OFF (Click to mask profits)'}
+            >
+              {isPrivacyMode ? <EyeOff className="w-4 h-4 text-amber-200" /> : <Eye className="w-4 h-4" />}
+            </button>
+          )}
+
           {/* Install on iPhone / Add to Home Screen Button */}
           {!isStandalone && onOpenInstall && (
             <button

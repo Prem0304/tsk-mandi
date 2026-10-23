@@ -11,7 +11,7 @@ import { dbService } from '../../lib/db';
 import { formatINR, getTodayDateString } from '../../lib/utils';
 import { calculatePaymentSplit } from '../../lib/allocationEngine';
 import { PaymentReceived, PaymentMode } from '../../types';
-import { X, ArrowDownLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, ArrowDownLeft, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface ReceivePaymentModalProps {
   isOpen: boolean;
@@ -25,7 +25,7 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
   defaultCustomerId
 }) => {
   const { t } = useI18n();
-  const { requestActionAuthorization } = useAuth();
+  const { requestActionAuthorization, canSeeProfit } = useAuth();
   const { state, customerSummaries } = useApp();
 
   const [customerId, setCustomerId] = useState(defaultCustomerId || '');
@@ -36,6 +36,7 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
   const [discount, setDiscount] = useState<number>(0);
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [showSplit, setShowSplit] = useState(false);
 
   const selectedCustomer = useMemo(() => {
     return customerSummaries.find(c => c.customerId === customerId);
@@ -258,29 +259,37 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
             </p>
           </div>
 
-          {/* LIVE SECTION 9A SPLIT PREVIEW */}
-          {splitPreview && (
-            <div className="bg-amber-50 border-2 border-amber-300 p-3 rounded-2xl space-y-1.5 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between text-amber-900 font-extrabold text-xs">
-                <span>{t('payments.splitPreview')}</span>
-                <span className="text-[10px] bg-amber-200 px-1.5 py-0.5 rounded font-bold uppercase">
+          {/* SECTION 9A SPLIT PREVIEW (OWNER TOGGLE - HIDDEN BY DEFAULT FOR PRIVACY) */}
+          {splitPreview && canSeeProfit && (
+            <div className="bg-amber-50/70 border border-amber-300 rounded-2xl p-2.5 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowSplit(!showSplit)}
+                  className="flex items-center space-x-1.5 font-bold text-amber-900 hover:text-amber-950"
+                >
+                  {showSplit ? <EyeOff className="w-3.5 h-3.5 text-amber-800" /> : <Eye className="w-3.5 h-3.5 text-amber-800" />}
+                  <span>{showSplit ? 'Hide Internal Profit Split' : 'Show Internal Profit Split'}</span>
+                </button>
+                <span className="text-[10px] bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded font-bold uppercase">
                   {state.settings.paymentAllocationRule === 'supplier_first' ? 'Supplier First' : 'Proportional'}
                 </span>
               </div>
               
-              <div className="space-y-1 text-xs text-amber-950 pt-1 border-t border-amber-200/80">
-                {splitPreview.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-0.5">
-                    <span>{item.description}</span>
-                    <strong className="text-amber-900">{formatINR(item.amount)}</strong>
+              {showSplit && (
+                <div className="space-y-1 text-xs text-amber-950 pt-2 border-t border-amber-200/80 animate-in fade-in duration-150">
+                  {splitPreview.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-0.5">
+                      <span>{item.description}</span>
+                      <strong className="text-amber-900">{formatINR(item.amount)}</strong>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center text-[11px] font-bold text-amber-800 pt-1.5 border-t border-amber-200">
+                    <span>Supplier Money in Hand: +{formatINR(splitPreview.totalSupplierShare)}</span>
+                    <span className="text-emerald-700 font-black">Realised Profit: +{formatINR(splitPreview.totalProfitShare)}</span>
                   </div>
-                ))}
-              </div>
-
-              <div className="flex justify-between items-center text-[11px] font-bold text-amber-800 pt-1.5 border-t border-amber-200">
-                <span>Supplier Money in Hand: +{formatINR(splitPreview.totalSupplierShare)}</span>
-                <span className="text-emerald-700">Realised Profit: +{formatINR(splitPreview.totalProfitShare)}</span>
-              </div>
+                </div>
+              )}
             </div>
           )}
 
