@@ -337,8 +337,8 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto select-none">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[92vh] animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto sm:my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
         
         {/* Header */}
         <div className="bg-tomato text-white px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between">
@@ -480,7 +480,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                             newLines[idx].categoryId = e.target.value;
                             setLines(newLines);
                           }}
-                          className="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white font-bold text-xs"
+                          className="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white font-bold text-base sm:text-xs"
                         >
                           {state.categories.map(c => (
                             <option key={c.id} value={c.id}>
@@ -629,7 +629,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                   value={cratesIssued['big'] || ''}
                   onChange={e => setCratesIssued({ ...cratesIssued, big: parseInt(e.target.value, 10) || 0 })}
                   placeholder="Big"
-                  className="h-9 px-2 rounded-lg border border-slate-300 text-xs text-center font-bold"
+                  className="h-10 px-2 rounded-lg border border-slate-300 text-base sm:text-xs text-center font-bold"
                 />
                 <input
                   type="number"
@@ -637,7 +637,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                   value={cratesIssued['small'] || ''}
                   onChange={e => setCratesIssued({ ...cratesIssued, small: parseInt(e.target.value, 10) || 0 })}
                   placeholder="Small"
-                  className="h-9 px-2 rounded-lg border border-slate-300 text-xs text-center font-bold"
+                  className="h-10 px-2 rounded-lg border border-slate-300 text-base sm:text-xs text-center font-bold"
                 />
               </div>
             </div>
@@ -653,7 +653,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                   value={cratesReturned['big'] || ''}
                   onChange={e => setCratesReturned({ ...cratesReturned, big: parseInt(e.target.value, 10) || 0 })}
                   placeholder="Big"
-                  className="h-9 px-2 rounded-lg border border-slate-300 text-xs text-center font-bold text-emerald-700"
+                  className="h-10 px-2 rounded-lg border border-slate-300 text-base sm:text-xs text-center font-bold text-emerald-700"
                 />
                 <input
                   type="number"
@@ -661,7 +661,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                   value={cratesReturned['small'] || ''}
                   onChange={e => setCratesReturned({ ...cratesReturned, small: parseInt(e.target.value, 10) || 0 })}
                   placeholder="Small"
-                  className="h-9 px-2 rounded-lg border border-slate-300 text-xs text-center font-bold text-emerald-700"
+                  className="h-10 px-2 rounded-lg border border-slate-300 text-base sm:text-xs text-center font-bold text-emerald-700"
                 />
               </div>
             </div>

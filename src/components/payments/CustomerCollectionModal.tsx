@@ -345,7 +345,7 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-between p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-start p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200 safe-area-pt safe-area-pb">
       
       {/* Top Shielded Header */}
       <div className="w-full max-w-2xl mx-auto flex items-center justify-between pb-3 border-b border-slate-800 text-white shrink-0">
@@ -396,7 +396,7 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
       </div>
 
       {/* Main Body Container */}
-      <div className="w-full max-w-2xl mx-auto my-auto py-3 space-y-4">
+      <div className="w-full max-w-2xl mx-auto flex-1 py-2 sm:py-3 space-y-3.5">
 
         {/* ----------------- SUCCESS CONFIRMATION SCREEN ----------------- */}
         {successReceipt ? (
@@ -537,7 +537,7 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={language === 'ta' ? 'பெயர், கடை, ஊர் அல்லது போன் மூலம் தேடுக...' : 'Search customer by name, shop, or phone...'}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-700 rounded-2xl text-white text-sm focus:outline-none focus:border-emerald-400"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-700 rounded-2xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-400"
                     autoFocus
                   />
                   {searchTerm && (
@@ -675,6 +675,7 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                     <span className="absolute left-3.5 top-2.5 text-lg font-black text-slate-400">₹</span>
                     <input
                       type="number"
+                      inputMode="decimal"
                       min="0"
                       step="1"
                       value={amount}
@@ -685,13 +686,13 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                   </div>
 
                   {/* Preset Amount Chips */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {[500, 1000, 2000, 5000].map((preset) => (
                       <button
                         key={preset}
                         type="button"
                         onClick={() => setAmount(preset)}
-                        className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold border border-slate-700/80 active:scale-95 transition-all"
+                        className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold border border-slate-700/80 active:scale-95 transition-all"
                       >
                         +₹{preset}
                       </button>
@@ -700,7 +701,7 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                       <button
                         type="button"
                         onClick={() => setAmount(currentBalance)}
-                        className="px-2.5 py-1 text-xs bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 rounded-xl font-black border border-emerald-500/40 active:scale-95 transition-all"
+                        className="px-3 py-1.5 text-xs bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 rounded-xl font-black border border-emerald-500/40 active:scale-95 transition-all"
                       >
                         {formatINR(currentBalance)}
                       </button>
@@ -788,6 +789,7 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                         </label>
                         <input
                           type="number"
+                          inputMode="decimal"
                           min="0"
                           value={cashTendered}
                           onChange={(e) => setCashTendered(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
@@ -857,24 +859,25 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                         <button
                           type="button"
                           onClick={() => setBigCratesReturned(Math.max(0, bigCratesReturned - 1))}
-                          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold"
+                          className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-200 font-bold shrink-0"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-4 h-4" />
                         </button>
                         <input
                           type="number"
+                          inputMode="numeric"
                           min="0"
                           value={bigCratesReturned || ''}
                           onChange={(e) => setBigCratesReturned(Math.max(0, parseInt(e.target.value) || 0))}
                           placeholder="0"
-                          className="w-full text-center py-1 bg-slate-950 border border-slate-700 rounded-lg text-sm font-black text-amber-300 focus:outline-none"
+                          className="w-full text-center py-2 bg-slate-950 border border-slate-700 rounded-xl text-base font-black text-amber-300 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setBigCratesReturned(bigCratesReturned + 1)}
-                          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold"
+                          className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-200 font-bold shrink-0"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -889,24 +892,25 @@ export const CustomerCollectionModal: React.FC<CustomerCollectionModalProps> = (
                         <button
                           type="button"
                           onClick={() => setSmallCratesReturned(Math.max(0, smallCratesReturned - 1))}
-                          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold"
+                          className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-200 font-bold shrink-0"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-4 h-4" />
                         </button>
                         <input
                           type="number"
+                          inputMode="numeric"
                           min="0"
                           value={smallCratesReturned || ''}
                           onChange={(e) => setSmallCratesReturned(Math.max(0, parseInt(e.target.value) || 0))}
                           placeholder="0"
-                          className="w-full text-center py-1 bg-slate-950 border border-slate-700 rounded-lg text-sm font-black text-amber-300 focus:outline-none"
+                          className="w-full text-center py-2 bg-slate-950 border border-slate-700 rounded-xl text-base font-black text-amber-300 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setSmallCratesReturned(smallCratesReturned + 1)}
-                          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold"
+                          className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-200 font-bold shrink-0"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

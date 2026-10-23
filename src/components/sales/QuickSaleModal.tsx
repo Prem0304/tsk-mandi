@@ -186,8 +186,8 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 select-none">
-      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
         
         {/* Rapid Header */}
         <div className="bg-amber-500 text-white px-5 py-3.5 flex items-center justify-between">

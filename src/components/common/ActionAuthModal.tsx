@@ -60,8 +60,8 @@ export const ActionAuthModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[80] bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 select-none">
-      <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[80] bg-slate-900/85 backdrop-blur-md flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+      <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
         
         {/* Top Header */}
         <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-5 py-3.5 flex items-center justify-between shadow-xs">
@@ -109,6 +109,7 @@ export const ActionAuthModal: React.FC = () => {
               <input
                 ref={inputRef}
                 type={showPassword ? 'text' : 'password'}
+                inputMode="numeric"
                 value={password}
                 onChange={e => {
                   setPassword(e.target.value);

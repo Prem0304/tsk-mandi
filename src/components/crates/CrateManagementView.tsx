@@ -560,45 +560,96 @@ export const CrateManagementView: React.FC = () => {
 
       {/* TAB 3: RECENT MOVEMENTS */}
       {activeTab === 'history' && (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 font-bold text-[11px] text-slate-600 uppercase">
-                <tr>
-                  <th className="p-3 pl-4">Date</th>
-                  <th className="p-3">Party Type</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3 text-center">In</th>
-                  <th className="p-3 text-center">Out</th>
-                  <th className="p-3">Reason / Ref</th>
-                  <th className="p-3 pr-4">Ownership</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentMovements.map(m => (
-                  <tr key={m.id} className="hover:bg-slate-50">
-                    <td className="p-3 pl-4 font-mono text-slate-700 whitespace-nowrap">
-                      <span className="font-bold block">{formatDate(m.movementDate)}</span>
-                      <span className="text-[10px] text-slate-400 font-sans block">{getDayName(m.movementDate, language, false)}</span>
-                    </td>
-                    <td className="p-3 font-bold capitalize">{m.partyType}</td>
-                    <td className="p-3 font-semibold uppercase">{m.categoryId}</td>
-                    <td className="p-3 text-center font-bold text-emerald-700">{m.qtyIn || '-'}</td>
-                    <td className="p-3 text-center font-bold text-rose-700">{m.qtyOut || '-'}</td>
-                    <td className="p-3 text-slate-600">{m.notes || m.refType}</td>
-                    <td className="p-3 pr-4 capitalize">{m.ownership}</td>
+        <div className="space-y-3">
+          {/* Mobile Card Layout (< md) - Zero Horizontal Scrolling on Phone */}
+          <div className="md:hidden space-y-2">
+            {recentMovements.length === 0 ? (
+              <div className="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs border border-slate-200">
+                No crate movements found.
+              </div>
+            ) : (
+              recentMovements.map(m => (
+                <div key={m.id} className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-[11px] font-bold font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                        {formatDate(m.movementDate)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {getDayName(m.movementDate, language, false)}
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                      {m.ownership}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-extrabold capitalize text-slate-900">{m.partyType}</span>
+                      <span className="text-slate-400 text-[11px] ml-1.5">({m.categoryId.toUpperCase()})</span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{m.notes || m.refType}</p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      {m.qtyIn > 0 && (
+                        <div className="text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          +{m.qtyIn} In
+                        </div>
+                      )}
+                      {m.qtyOut > 0 && (
+                        <div className="text-xs font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                          -{m.qtyOut} Out
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table (hidden md:block) */}
+          <div className="hidden md:block bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 font-bold text-[11px] text-slate-600 uppercase">
+                  <tr>
+                    <th className="p-3 pl-4">Date</th>
+                    <th className="p-3">Party Type</th>
+                    <th className="p-3">Category</th>
+                    <th className="p-3 text-center">In</th>
+                    <th className="p-3 text-center">Out</th>
+                    <th className="p-3">Reason / Ref</th>
+                    <th className="p-3 pr-4">Ownership</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {recentMovements.map(m => (
+                    <tr key={m.id} className="hover:bg-slate-50">
+                      <td className="p-3 pl-4 font-mono text-slate-700 whitespace-nowrap">
+                        <span className="font-bold block">{formatDate(m.movementDate)}</span>
+                        <span className="text-[10px] text-slate-400 font-sans block">{getDayName(m.movementDate, language, false)}</span>
+                      </td>
+                      <td className="p-3 font-bold capitalize">{m.partyType}</td>
+                      <td className="p-3 font-semibold uppercase">{m.categoryId}</td>
+                      <td className="p-3 text-center font-bold text-emerald-700">{m.qtyIn || '-'}</td>
+                      <td className="p-3 text-center font-bold text-rose-700">{m.qtyOut || '-'}</td>
+                      <td className="p-3 text-slate-600">{m.notes || m.refType}</td>
+                      <td className="p-3 pr-4 capitalize">{m.ownership}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
       {/* RECORD CRATE RETURN MODAL (SECTION 10.3 & 10.4) */}
       {isReturnModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
-          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
             <div className="bg-emerald-600 text-white px-5 py-4 flex items-center justify-between">
               <h3 className="font-extrabold text-base">Record Crate Return</h3>
               <button onClick={() => setIsReturnModalOpen(false)} className="text-white">
@@ -634,7 +685,7 @@ export const CrateManagementView: React.FC = () => {
                 <select
                   value={returnPartyId}
                   onChange={e => setReturnPartyId(e.target.value)}
-                  className="w-full h-10 px-2 rounded-xl border border-slate-300 font-semibold"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-300 font-semibold text-base sm:text-xs"
                 >
                   <option value="">-- Choose --</option>
                   {returnPartyType === 'customer'
@@ -654,22 +705,24 @@ export const CrateManagementView: React.FC = () => {
                   <label className="font-bold block mb-1">Big Crates (பெரிய)</label>
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     value={returnBigQty || ''}
                     onChange={e => setReturnBigQty(parseInt(e.target.value, 10) || 0)}
                     placeholder="0"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-extrabold text-sm text-center"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-300 font-extrabold text-base text-center"
                   />
                 </div>
                 <div>
                   <label className="font-bold block mb-1">Small Crates (சிறிய)</label>
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     value={returnSmallQty || ''}
                     onChange={e => setReturnSmallQty(parseInt(e.target.value, 10) || 0)}
                     placeholder="0"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-extrabold text-sm text-center"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-300 font-extrabold text-base text-center"
                   />
                 </div>
               </div>
@@ -706,8 +759,8 @@ export const CrateManagementView: React.FC = () => {
 
       {/* PHYSICAL COUNT CHECK MODAL (SECTION 10.2) */}
       {isCountModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
-          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
             <div className="bg-blue-600 text-white px-5 py-4 flex items-center justify-between">
               <h3 className="font-extrabold text-base">Physical Count Check</h3>
               <button onClick={() => setIsCountModalOpen(false)} className="text-white">
@@ -721,7 +774,7 @@ export const CrateManagementView: React.FC = () => {
                 <select
                   value={countCategory}
                   onChange={e => setCountCategory(e.target.value as any)}
-                  className="w-full h-10 px-2 rounded-xl border border-slate-300 font-bold"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-300 font-bold text-base sm:text-xs"
                 >
                   <option value="big">Big Crate (பெரிய பெட்டி)</option>
                   <option value="small">Small Crate (சிறிய பெட்டி)</option>
@@ -751,6 +804,7 @@ export const CrateManagementView: React.FC = () => {
                 <label className="font-bold block mb-1">Actual Physical Count in Shop *</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min="0"
                   value={actualPhysicalCount || ''}
                   onChange={e => setActualPhysicalCount(parseInt(e.target.value, 10) || 0)}
@@ -766,7 +820,7 @@ export const CrateManagementView: React.FC = () => {
                   value={countNotes}
                   onChange={e => setCountNotes(e.target.value)}
                   placeholder="e.g. Weekly physical verification"
-                  className="w-full h-9 px-2 rounded-xl border border-slate-300"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-300 text-base sm:text-xs"
                 />
               </div>
             </div>
@@ -791,8 +845,8 @@ export const CrateManagementView: React.FC = () => {
 
       {/* BUY NEW CRATES OR MARK DAMAGED MODAL */}
       {isEventModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
-          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
             <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
               <h3 className="font-extrabold text-base">Crate Inventory Event</h3>
               <button onClick={() => setIsEventModalOpen(false)} className="text-white">
@@ -833,7 +887,7 @@ export const CrateManagementView: React.FC = () => {
                 <select
                   value={eventCategory}
                   onChange={e => setEventCategory(e.target.value as any)}
-                  className="w-full h-10 px-2 rounded-xl border border-slate-300 font-bold"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-300 font-bold text-base sm:text-xs"
                 >
                   <option value="big">Big Crate (பெரிய பெட்டி)</option>
                   <option value="small">Small Crate (சிறிய பெட்டி)</option>
@@ -845,11 +899,12 @@ export const CrateManagementView: React.FC = () => {
                   <label className="font-bold block mb-1">Quantity *</label>
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="1"
                     value={eventQty || ''}
                     onChange={e => setEventQty(parseInt(e.target.value, 10) || 0)}
                     placeholder="0"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-extrabold text-sm text-center"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-300 font-extrabold text-base text-center"
                   />
                 </div>
                 {eventType === 'new_purchase' && (
@@ -857,11 +912,12 @@ export const CrateManagementView: React.FC = () => {
                     <label className="font-bold block mb-1">Cost/Crate (₹)</label>
                     <input
                       type="number"
+                      inputMode="decimal"
                       min="0"
                       value={eventUnitCost || ''}
                       onChange={e => setEventUnitCost(parseFloat(e.target.value) || 0)}
                       placeholder="180"
-                      className="w-full h-10 px-3 rounded-xl border border-slate-300 font-bold text-sm text-right"
+                      className="w-full h-11 px-3 rounded-xl border border-slate-300 font-bold text-base text-right"
                     />
                   </div>
                 )}

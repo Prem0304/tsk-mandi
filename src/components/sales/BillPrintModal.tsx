@@ -69,8 +69,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const footerNote = language === 'ta' && state.settings.billFooterTa ? state.settings.billFooterTa : state.settings.billFooter;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 select-none">
-      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto safe-area-pt safe-area-pb select-none">
+      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[95dvh] animate-in zoom-in-95 duration-150 shrink-0">
         
         {/* Top bar */}
         <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">

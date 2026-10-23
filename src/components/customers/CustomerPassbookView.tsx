@@ -473,8 +473,90 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
         />
       </div>
 
-      {/* BANK PASSBOOK STYLE TABLE */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* MOBILE PASSBOOK CARD LIST (< md) - ZERO HORIZONTAL SCROLLING ON PHONE */}
+      <div className="md:hidden space-y-2.5">
+        {passbookRows.length === 0 ? (
+          <div className="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs border border-slate-200">
+            No transactions found for this customer.
+          </div>
+        ) : (
+          passbookRows.map(row => (
+            <div key={row.id} className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[11px] font-bold font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                      {formatDate(row.date)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {getDayName(row.date, language, false)}
+                    </span>
+                  </div>
+                  <h4 className="font-extrabold text-xs text-slate-900 mt-1">
+                    {row.particulars}
+                  </h4>
+                </div>
+
+                {/* Amount Paid or Bought */}
+                <div className="text-right shrink-0">
+                  {row.debit > 0 && (
+                    <div className="text-sm font-black text-slate-900">
+                      +{formatINR(row.debit)}
+                    </div>
+                  )}
+                  {row.credit > 0 && (
+                    <div className="text-sm font-black text-emerald-600">
+                      -{formatINR(row.credit)}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Crates, Rate & Balance */}
+              <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100">
+                <div className="flex items-center space-x-1.5">
+                  {(row.bigCrates !== '-' && Number(row.bigCrates) > 0) && (
+                    <span className="text-[10px] bg-amber-50 text-amber-900 border border-amber-200 font-bold px-1.5 py-0.5 rounded">
+                      Big: {row.bigCrates}
+                    </span>
+                  )}
+                  {(row.smallCrates !== '-' && Number(row.smallCrates) > 0) && (
+                    <span className="text-[10px] bg-amber-50 text-amber-900 border border-amber-200 font-bold px-1.5 py-0.5 rounded">
+                      Small: {row.smallCrates}
+                    </span>
+                  )}
+                  {typeof row.rate === 'number' && (
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      @ ₹{row.rate.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 font-medium">Net Bal: </span>
+                  <strong className="text-xs font-black text-slate-950 font-mono">{formatINR(row.balance)}</strong>
+                </div>
+              </div>
+
+              {/* Owner internal split preview if enabled */}
+              {showSplit && canSeeProfit && row.allocations && row.allocations.length > 0 && (
+                <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-2 text-[10px] space-y-1 text-amber-900">
+                  <span className="font-bold block">Internal Split Preview:</span>
+                  {row.allocations.map((a, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span>{a.supplierName}:</span>
+                      <span>Cost: {formatINR(a.supplierShare)} | Profit: <strong className="text-emerald-700">{formatINR(a.profitShare)}</strong></span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* BANK PASSBOOK STYLE TABLE (>= md) */}
+      <div className="hidden md:block bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs table-fixed min-w-[780px]">
             <thead className="bg-slate-900 text-white font-bold text-[11px] uppercase tracking-wider">

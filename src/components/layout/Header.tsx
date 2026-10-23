@@ -55,22 +55,22 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-tomato text-white shadow-md select-none safe-area-pt">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-1 sm:gap-2">
         
         {/* Brand & Mandi Name */}
-        <div className="flex items-center space-x-2.5 overflow-hidden">
-          <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center p-1 border border-white/20 shrink-0">
-            <img src="/tomato.svg" alt="TSK Mandi" className="w-7 h-7 object-contain" />
+        <div className="flex items-center space-x-2 overflow-hidden shrink min-w-0 max-w-[135px] xs:max-w-[170px] sm:max-w-none">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center p-1 border border-white/20 shrink-0">
+            <img src="/tomato.svg" alt="TSK Mandi" className="w-6 h-6 sm:w-7 sm:h-7 object-contain" />
           </div>
-          <div className="truncate">
-            <h1 className="text-base sm:text-lg font-bold tracking-tight leading-tight truncate">
+          <div className="truncate min-w-0">
+            <h1 className="text-sm sm:text-base md:text-lg font-black tracking-tight leading-tight truncate">
               {shopName}
             </h1>
-            <div className="flex items-center space-x-1.5 leading-none">
-              <span className="text-[11px] text-white/80 font-medium truncate">
+            <div className="flex items-center space-x-1 leading-none">
+              <span className="text-[10px] sm:text-[11px] text-white/80 font-medium truncate">
                 {t('app.subtitle')}
               </span>
-              <span className="md:hidden text-[10px] text-amber-200 font-black">
+              <span className="hidden md:hidden lg:inline text-[10px] text-amber-200 font-bold">
                 • {formatDateWithDay(new Date(), language, true)}
               </span>
             </div>
@@ -78,23 +78,23 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Date and Day Center Badge (Desktop & Tablet) */}
-        <div className="hidden md:flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-black/20 border border-white/15 text-xs font-bold text-white tracking-wide shadow-xs">
+        <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-black/20 border border-white/15 text-xs font-bold text-white tracking-wide shadow-xs shrink-0">
           <Calendar className="w-3.5 h-3.5 text-amber-300" />
           <span>{formatDateWithDay(new Date(), language, false)}</span>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
           
           {/* Quick Customer Collection (Shielded Mode) */}
           {onOpenCollection && (
             <button
               onClick={onOpenCollection}
-              className="px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center space-x-1 font-black text-xs shadow-sm border border-emerald-400/50 transition-all"
-              title={language === 'ta' ? 'வாடிக்கையாளர் வசூல் (ரகசிய முறை)' : 'Collect Money (Shielded Counter Mode)'}
+              className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center space-x-1 font-black text-xs shadow-sm border border-emerald-400/50 transition-all shrink-0"
+              title={language === 'ta' ? 'வாடிக்கையாளர் வசூல்' : 'Collect Money'}
             >
               <Coins className="w-3.5 h-3.5 text-emerald-100" />
-              <span>{language === 'ta' ? 'வசூல்' : 'Collect'}</span>
+              <span className="text-[11px] sm:text-xs">{language === 'ta' ? 'வசூல்' : 'Collect'}</span>
             </button>
           )}
 
@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
           {role === 'owner' && onTogglePrivacy && (
             <button
               onClick={onTogglePrivacy}
-              className={`p-1.5 rounded-lg active:scale-95 transition-all border ${
+              className={`p-1.5 rounded-lg active:scale-95 transition-all border shrink-0 ${
                 isPrivacyMode
                   ? 'bg-amber-400/30 border-amber-300 text-amber-200 shadow-inner'
                   : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/90'
@@ -113,15 +113,15 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Install on iPhone / Add to Home Screen Button */}
+          {/* Install on iPhone / Add to Home Screen Button (Desktop / Tablet only) */}
           {!isStandalone && onOpenInstall && (
             <button
               onClick={onOpenInstall}
-              className="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white flex items-center space-x-1 border border-white/20 text-xs font-bold"
+              className="hidden md:flex px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white items-center space-x-1 border border-white/20 text-xs font-bold shrink-0"
               title={isIos ? (language === 'ta' ? 'ஐபோனில் சேர்க்க' : 'Add to iPhone') : (language === 'ta' ? 'பயன்பாட்டை நிறுவ' : 'Install App')}
             >
               <Smartphone className="w-3.5 h-3.5 text-amber-200" />
-              <span className="hidden sm:inline">
+              <span>
                 {isIos ? (language === 'ta' ? 'ஐபோனில் சேர்' : 'iPhone App') : (language === 'ta' ? 'நிறுவ' : 'Install')}
               </span>
             </button>
@@ -130,16 +130,16 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Global Search Button */}
           <button
             onClick={onOpenSearch}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white/90"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white/90 shrink-0"
             title={t('common.search')}
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
-          {/* Sync Status Badge / Button */}
+          {/* Sync Status Badge / Button (Tablet / Desktop only) */}
           <button
             onClick={triggerManualSync}
-            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 border transition-all ${
+            className={`hidden sm:flex px-2 py-1 rounded-full text-xs font-medium items-center space-x-1 border transition-all shrink-0 ${
               syncState === 'synced'
                 ? 'bg-emerald-500/20 border-emerald-300 text-emerald-100 hover:bg-emerald-500/30'
                 : syncState === 'syncing'
@@ -151,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
             {syncState === 'synced' && <Wifi className="w-3.5 h-3.5 text-emerald-300" />}
             {syncState === 'syncing' && <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />}
             {syncState === 'offline' && <WifiOff className="w-3.5 h-3.5 text-rose-300" />}
-            <span className="hidden sm:inline">
+            <span>
               {syncState === 'synced' ? t('app.synced') : syncState === 'syncing' ? t('app.syncing') : t('app.offline')}
             </span>
           </button>
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Language Toggle (English / தமிழ்) */}
           <button
             onClick={toggleLanguage}
-            className="px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-bold tracking-wide active:scale-95 transition-all flex items-center space-x-1"
+            className="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/25 text-[11px] sm:text-xs font-bold tracking-wide active:scale-95 transition-all flex items-center space-x-1 shrink-0"
             title="Toggle Language / மொழியை மாற்றுக"
           >
             <Globe className="w-3.5 h-3.5" />
@@ -170,12 +170,12 @@ export const Header: React.FC<HeaderProps> = ({
           {role === 'owner' ? (
             <button
               onClick={switchToStaff}
-              className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-black/25 hover:bg-black/35 text-[11px] font-black text-amber-200 border border-amber-300/40 active:scale-95 transition-all shadow-xs"
-              title={language === 'ta' ? 'பணியாளர் முறைக்கு மாற்றுக (லாபம் மறைக்கப்படும்)' : 'Switch to Staff Mode (Profits hidden)'}
+              className="flex items-center space-x-1 px-1.5 sm:px-2 py-1 rounded-lg bg-black/25 hover:bg-black/35 text-[10px] sm:text-[11px] font-black text-amber-200 border border-amber-300/40 active:scale-95 transition-all shadow-xs shrink-0"
+              title={language === 'ta' ? 'பணியாளர் முறைக்கு மாற்றுக' : 'Switch to Staff Mode'}
             >
-              <Shield className="w-3.5 h-3.5 text-amber-300" />
-              <span>👑 {language === 'ta' ? 'உரிமையாளர்' : 'Owner'}</span>
-              <span className="hidden sm:inline text-[9px] bg-white/20 px-1 py-0.5 rounded font-bold ml-1">→ Staff</span>
+              <span>👑</span>
+              <span className="hidden sm:inline">{language === 'ta' ? 'உரிமையாளர்' : 'Owner'}</span>
+              <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded font-bold">Staff</span>
             </button>
           ) : (
             <button
@@ -184,19 +184,19 @@ export const Header: React.FC<HeaderProps> = ({
                 setOwnerPinError(false);
                 setShowOwnerPinModal(true);
               }}
-              className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-[11px] font-black text-emerald-200 border border-emerald-400/50 active:scale-95 transition-all shadow-xs"
-              title={language === 'ta' ? 'உரிமையாளர் முறைக்கு மாற்ற PIN உள்ளிடுக' : 'Unlock Owner Mode with PIN'}
+              className="flex items-center space-x-1 px-1.5 sm:px-2 py-1 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-[10px] sm:text-[11px] font-black text-emerald-200 border border-emerald-400/50 active:scale-95 transition-all shadow-xs shrink-0"
+              title={language === 'ta' ? 'உரிமையாளர் முறைக்கு மாற்ற PIN உள்ளிடுக' : 'Unlock Owner Mode'}
             >
-              <User className="w-3.5 h-3.5 text-emerald-300" />
-              <span>👤 {language === 'ta' ? 'பணியாளர்' : 'Staff'}</span>
-              <span className="hidden sm:inline text-[9px] bg-white/20 px-1 py-0.5 rounded font-bold ml-1">→ Owner</span>
+              <span>👤</span>
+              <span className="hidden sm:inline">{language === 'ta' ? 'பணியாளர்' : 'Staff'}</span>
+              <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded font-bold">Owner</span>
             </button>
           )}
 
           {/* App Lock Button */}
           <button
             onClick={lockApp}
-            className="p-1.5 rounded-lg bg-black/20 hover:bg-black/30 active:scale-95 text-white/90 transition-all border border-white/15"
+            className="p-1.5 rounded-lg bg-black/20 hover:bg-black/30 active:scale-95 text-white/90 transition-all border border-white/15 shrink-0"
             title={t('app.lockApp')}
           >
             <Lock className="w-4 h-4" />
