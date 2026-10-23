@@ -1,0 +1,90 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF3B50" />
+      <stop offset="50%" stop-color="#D7263D" />
+      <stop offset="100%" stop-color="#B81429" />
+    </linearGradient>
+
+    <!-- Tomato Body Gradient -->
+    <linearGradient id="tomatoGrad" x1="25%" y1="20%" x2="80%" y2="85%">
+      <stop offset="0%" stop-color="#FF5A6E" />
+      <stop offset="40%" stop-color="#E2243C" />
+      <stop offset="100%" stop-color="#9E0C1F" />
+    </linearGradient>
+
+    <!-- Tomato Highlight -->
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#FF8A9A" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Leaf Gradient -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#52B788" />
+      <stop offset="50%" stop-color="#2D6A4F" />
+      <stop offset="100%" stop-color="#1B4332" />
+    </linearGradient>
+
+    <!-- Shadow filter -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#550009" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Solid Background (No transparency for iOS home screen) -->
+  <rect width="512" height="512" rx="0" fill="url(#bgGrad)" />
+
+  <!-- Subtle Inner Glow / Border -->
+  <rect x="12" y="12" width="488" height="488" rx="80" fill="none" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="4" />
+
+  <!-- T.S.K Header Text -->
+  <g filter="url(#dropShadow)">
+    <text x="256" y="105" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" 
+          font-size="70" 
+          font-weight="900" 
+          letter-spacing="5"
+          fill="#FFFFFF" 
+          text-anchor="middle">T.S.K</text>
+  </g>
+
+  <!-- Tomato Center Graphic with Drop Shadow -->
+  <g filter="url(#dropShadow)">
+    <!-- Tomato Main Body -->
+    <circle cx="256" cy="285" r="145" fill="url(#tomatoGrad)" />
+
+    <!-- Tomato Side Bulges for organic plump look -->
+    <ellipse cx="205" cy="295" rx="100" ry="125" fill="url(#tomatoGrad)" />
+    <ellipse cx="307" cy="295" rx="100" ry="125" fill="url(#tomatoGrad)" />
+
+    <!-- Specular Highlight for glossy 3D fruit look -->
+    <ellipse cx="215" cy="235" rx="48" ry="28" transform="rotate(-25 215 235)" fill="url(#highlightGrad)" />
+    <ellipse cx="195" cy="275" rx="14" ry="9" fill="#FFFFFF" opacity="0.4" />
+
+    <!-- Calyx & Leaves (Stem) -->
+    <!-- Center stalk -->
+    <path d="M256 165 C250 135, 262 120, 275 110 C270 125, 264 145, 256 165 Z" fill="#1B4332" />
+    
+    <!-- Leaves radiating from center -->
+    <path d="M256 165 C220 155, 175 170, 160 190 C185 182, 225 178, 256 165 Z" fill="url(#leafGrad)" />
+    <path d="M256 165 C292 155, 337 170, 352 190 C327 182, 287 178, 256 165 Z" fill="url(#leafGrad)" />
+    <path d="M256 165 C230 185, 205 215, 200 240 C220 215, 240 195, 256 165 Z" fill="#40916C" />
+    <path d="M256 165 C282 185, 307 215, 312 240 C292 215, 272 195, 256 165 Z" fill="#40916C" />
+    <path d="M256 165 C250 195, 252 230, 256 248 C260 230, 262 195, 256 165 Z" fill="#52B788" />
+  </g>
+
+  <!-- MANDI Sub-badge -->
+  <g filter="url(#dropShadow)">
+    <rect x="156" y="425" width="200" height="44" rx="22" fill="#FFFFFF" />
+    <text x="256" y="456" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" 
+          font-size="24" 
+          font-weight="900" 
+          letter-spacing="6"
+          fill="#B81429" 
+          text-anchor="middle">MANDI</text>
+  </g>
+</svg>

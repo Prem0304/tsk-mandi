@@ -17,6 +17,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { PinLockModal } from './components/layout/PinLockModal';
 import { ActionAuthModal } from './components/common/ActionAuthModal';
 import { GlobalSearchModal } from './components/layout/GlobalSearchModal';
+import { IosInstallPrompt } from './components/common/IosInstallPrompt';
 
 // Views
 import { DashboardView } from './components/dashboard/DashboardView';
@@ -44,6 +45,7 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isIosInstallOpen, setIsIosInstallOpen] = useState(false);
 
   // Active Customer Passbook state (when a customer is clicked)
   const [selectedCustomerIdForPassbook, setSelectedCustomerIdForPassbook] = useState<string | null>(null);
@@ -91,8 +93,11 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       
-      {/* Sticky Header */}
-      <Header onOpenSearch={() => setIsSearchOpen(true)} />
+      {/* Sticky Header with iOS safe area support */}
+      <Header
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenInstall={() => setIsIosInstallOpen(true)}
+      />
 
       {/* Main Content Area: Sidebar on Desktop + View Body */}
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
@@ -108,10 +113,11 @@ export const App: React.FC = () => {
           }}
           isOpenMobileMore={isMobileMoreOpen}
           onCloseMobileMore={() => setIsMobileMoreOpen(false)}
+          onOpenInstall={() => setIsIosInstallOpen(true)}
         />
 
-        {/* View Switcher Container */}
-        <main className="flex-1 overflow-x-hidden min-w-0">
+        {/* View Switcher Container with iPhone safe area padding */}
+        <main className="flex-1 overflow-x-hidden min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
           {activeTab === 'dashboard' && (
             <DashboardView
               onOpenSale={() => setIsSaleModalOpen(true)}
@@ -303,6 +309,12 @@ export const App: React.FC = () => {
 
       {/* Layer 4: Master App PIN Screen Lock (Password 1, z-[100]) */}
       <PinLockModal />
+
+      {/* iPhone / iOS Home Screen Install Helper Prompt & Modal */}
+      <IosInstallPrompt
+        forceOpen={isIosInstallOpen}
+        onCloseForce={() => setIsIosInstallOpen(false)}
+      />
 
     </div>
   );

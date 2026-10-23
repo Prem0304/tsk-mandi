@@ -24,13 +24,16 @@ import {
   Shield,
   Plus,
   Image as ImageIcon,
-  AlertTriangle
+  AlertTriangle,
+  Smartphone
 } from 'lucide-react';
+import { IosInstallPrompt, isStandaloneApp } from '../common/IosInstallPrompt';
 
 export const SettingsView: React.FC = () => {
   const { t, language, setLanguage } = useI18n();
   const { role, setRole, requestActionAuthorization } = useAuth();
   const { state } = useApp();
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   // Settings form fields
   const [shopName, setShopName] = useState(state.settings.shopName);
@@ -650,6 +653,54 @@ export const SettingsView: React.FC = () => {
             <span>Clear All Data</span>
           </button>
         </div>
+      </div>
+
+      {/* 5. IPHONE & MOBILE APP SETUP */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center space-x-2">
+            <Smartphone className="w-5 h-5 text-tomato" />
+            <span>{language === 'ta' ? 'ஐபோன் மற்றும் மொபைல் ஆப் நிறுவுதல்' : 'iPhone & Mobile App (Add to Home Screen)'}</span>
+          </h3>
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+            isStandaloneApp() ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+          }`}>
+            {isStandaloneApp()
+              ? (language === 'ta' ? 'ஆப் நிறுவப்பட்டுள்ளது' : 'Installed as Standalone App')
+              : (language === 'ta' ? 'வலைப் பதிப்பு' : 'Browser Mode')}
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gradient-to-r from-rose-50 to-amber-50/50 border border-rose-100">
+          <div className="flex items-center space-x-3.5">
+            <img
+              src="/apple-touch-icon.png"
+              alt="TSK Mandi"
+              className="w-14 h-14 rounded-2xl shadow-md border border-white shrink-0"
+            />
+            <div>
+              <h4 className="font-extrabold text-sm text-slate-900">TSK Mandi for iPhone & Android</h4>
+              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                {language === 'ta'
+                  ? 'உங்கள் ஐபோன் முகப்புத் திரையில் குறுக்குவழியாகச் சேர்த்து இணையம் இன்றியும் முழுத் திரையில் பயன்படுத்தலாம்.'
+                  : 'Add to your iPhone Home Screen for instant 1-tap full-screen access with 100% offline capability.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowInstallGuide(true)}
+            className="w-full sm:w-auto px-5 py-2.5 bg-tomato hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0 flex items-center justify-center space-x-1.5"
+          >
+            <Smartphone className="w-4 h-4" />
+            <span>{language === 'ta' ? 'ஐபோனில் சேர்ப்பது எப்படி?' : 'How to Add to iPhone'}</span>
+          </button>
+        </div>
+
+        {showInstallGuide && (
+          <IosInstallPrompt forceOpen={showInstallGuide} onCloseForce={() => setShowInstallGuide(false)} />
+        )}
       </div>
 
     </div>

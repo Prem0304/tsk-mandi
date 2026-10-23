@@ -6,17 +6,21 @@ import React from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff, Calendar } from 'lucide-react';
+import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff, Calendar, Smartphone } from 'lucide-react';
 import { formatDateWithDay } from '../../lib/utils';
+import { isStandaloneApp, isIosDevice } from '../common/IosInstallPrompt';
 
 interface HeaderProps {
   onOpenSearch: () => void;
+  onOpenInstall?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onOpenInstall }) => {
   const { language, setLanguage, t } = useI18n();
   const { role, lockApp } = useAuth();
   const { state, syncState, triggerManualSync } = useApp();
+  const isStandalone = isStandaloneApp();
+  const isIos = isIosDevice();
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ta' : 'en');
@@ -25,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
   const shopName = language === 'ta' && state.settings.shopNameTa ? state.settings.shopNameTa : state.settings.shopName;
 
   return (
-    <header className="sticky top-0 z-30 bg-tomato text-white shadow-md select-none">
+    <header className="sticky top-0 z-30 bg-tomato text-white shadow-md select-none safe-area-pt">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
         
         {/* Brand & Mandi Name */}
@@ -57,6 +61,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch }) => {
         {/* Action Controls */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           
+          {/* Install on iPhone / Add to Home Screen Button */}
+          {!isStandalone && onOpenInstall && (
+            <button
+              onClick={onOpenInstall}
+              className="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white flex items-center space-x-1 border border-white/20 text-xs font-bold"
+              title={isIos ? (language === 'ta' ? 'ஐபோனில் சேர்க்க' : 'Add to iPhone') : (language === 'ta' ? 'பயன்பாட்டை நிறுவ' : 'Install App')}
+            >
+              <Smartphone className="w-3.5 h-3.5 text-amber-200" />
+              <span className="hidden sm:inline">
+                {isIos ? (language === 'ta' ? 'ஐபோனில் சேர்' : 'iPhone App') : (language === 'ta' ? 'நிறுவ' : 'Install')}
+              </span>
+            </button>
+          )}
+
           {/* Global Search Button */}
           <button
             onClick={onOpenSearch}

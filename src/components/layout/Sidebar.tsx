@@ -24,24 +24,30 @@ import {
   History,
   X,
   LogOut,
-  Shield
+  Shield,
+  Smartphone
 } from 'lucide-react';
+import { isStandaloneApp, isIosDevice } from '../common/IosInstallPrompt';
 
 interface SidebarProps {
   activeTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   isOpenMobileMore: boolean;
   onCloseMobileMore: () => void;
+  onOpenInstall?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
   isOpenMobileMore,
-  onCloseMobileMore
+  onCloseMobileMore,
+  onOpenInstall
 }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { role, setRole, canCreateSales, canSeeProfit } = useAuth();
+  const isStandalone = isStandaloneApp();
+  const isIos = isIosDevice();
 
   const handleNavClick = (tab: NavTab) => {
     onSelectTab(tab);
@@ -105,6 +111,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           );
         })}
+
+        {/* Install on iPhone / Mobile Button */}
+        {!isStandalone && onOpenInstall && (
+          <button
+            onClick={() => {
+              onCloseMobileMore();
+              onOpenInstall();
+            }}
+            className="w-full mt-2 flex items-center space-x-3 px-3 py-2.5 rounded-xl font-bold text-xs bg-rose-50 text-tomato hover:bg-rose-100 border border-rose-200 transition-all active:scale-95"
+          >
+            <Smartphone className="w-5 h-5 text-tomato shrink-0" />
+            <div className="text-left truncate">
+              <div className="leading-tight">
+                {isIos ? (language === 'ta' ? 'ஐபோனில் சேர்க்க' : 'Add to iPhone') : (language === 'ta' ? 'செயலியை நிறுவ' : 'Install App')}
+              </div>
+              <div className="text-[10px] text-slate-500 font-normal">
+                {language === 'ta' ? 'முகப்புத் திரை குறுக்குவழி' : 'Add to Home Screen'}
+              </div>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Role Switcher in Sidebar (for testing and quick demo switches) */}
