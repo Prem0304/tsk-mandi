@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { Lock, RefreshCw, Search, Shield, Globe, Wifi, WifiOff, Calendar, Smartphone, Coins, Eye, EyeOff, User, KeyRound, X } from 'lucide-react';
+import { Lock, RefreshCw, RotateCw, Search, Shield, Globe, Wifi, WifiOff, Calendar, Smartphone, Coins, Eye, EyeOff, User, KeyRound, X } from 'lucide-react';
 import { formatDateWithDay } from '../../lib/utils';
 import { isStandaloneApp, isIosDevice } from '../common/IosInstallPrompt';
 
@@ -34,6 +34,14 @@ export const Header: React.FC<HeaderProps> = ({
   const [showOwnerPinModal, setShowOwnerPinModal] = useState(false);
   const [ownerPinInput, setOwnerPinInput] = useState('');
   const [ownerPinError, setOwnerPinError] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
+
+  const handleReloadPage = () => {
+    setIsReloading(true);
+    setTimeout(() => {
+      window.location.reload();
+    }, 120);
+  };
 
   const handleOwnerPinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +142,15 @@ export const Header: React.FC<HeaderProps> = ({
             title={t('common.search')}
           >
             <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+
+          {/* Mobile & Desktop Page Reload Button */}
+          <button
+            onClick={handleReloadPage}
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-90 transition-all text-white/90 shrink-0 border border-white/10 flex items-center justify-center"
+            title={language === 'ta' ? 'பக்கத்தை மீண்டும் ஏற்றுக (Reload)' : 'Reload Page'}
+          >
+            <RotateCw className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${isReloading ? 'animate-spin text-amber-200' : ''}`} />
           </button>
 
           {/* Sync Status Badge / Button (Tablet / Desktop only) */}

@@ -13,6 +13,7 @@ import { formatINR, generateBillNo, getTodayDateString, formatDateWithDay } from
 import { allocateLotsFIFO } from '../../lib/allocationEngine';
 import { Sale, SaleLine, SaleLotAllocation } from '../../types';
 import { Zap, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { CustomerSearchSelect } from '../common/CustomerSearchSelect';
 
 interface QuickSaleModalProps {
   isOpen: boolean;
@@ -250,24 +251,16 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
             </div>
           )}
 
-          {/* Customer Dropdown */}
+          {/* Customer Search Dropdown */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">
-              Customer
-            </label>
-            <select
-              ref={customerSelectRef}
-              value={customerId}
-              onChange={e => handleCustomerSelect(e.target.value)}
-              className="w-full h-12 px-3 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm focus:border-amber-500 focus:bg-white focus:outline-none"
-            >
-              <option value="">-- Select Customer --</option>
-              {customerSummaries.map(c => (
-                <option key={c.customerId} value={c.customerId}>
-                  {c.customerName} {c.shopName ? `(${c.shopName})` : ''} - Bal: {formatINR(c.currentBalance)}
-                </option>
-              ))}
-            </select>
+            <CustomerSearchSelect
+              label="Customer"
+              required
+              autoFocus
+              selectedCustomerId={customerId}
+              onSelectCustomer={handleCustomerSelect}
+              placeholder={language === 'ta' ? 'வாடிக்கையாளர் பெயர், கடை அல்லது போன் எண் தேடுக...' : 'Search customer by name, shop, phone...'}
+            />
           </div>
 
           {/* Big Crates */}

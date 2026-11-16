@@ -12,6 +12,7 @@ import { formatINR, generateBillNo, getTodayDateString, formatDateWithDay } from
 import { allocateLotsFIFO, calculatePaymentSplit } from '../../lib/allocationEngine';
 import { Sale, SaleLine, SaleLotAllocation, PaymentMode } from '../../types';
 import { X, AlertTriangle, Plus, Trash2, ArrowRight, DollarSign, Box } from 'lucide-react';
+import { CustomerSearchSelect } from '../common/CustomerSearchSelect';
 
 interface SaleEntryModalProps {
   isOpen: boolean;
@@ -397,21 +398,13 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
           {/* Customer & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-bold text-slate-700">
-                {t('sales.customer')} *
-              </label>
-              <select
-                value={customerId}
-                onChange={e => handleCustomerChange(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-sm focus:bg-white focus:border-tomato focus:outline-none"
-              >
-                <option value="">-- Choose Customer --</option>
-                {customerSummaries.map(c => (
-                  <option key={c.customerId} value={c.customerId}>
-                    {c.customerName} {c.shopName ? `(${c.shopName})` : ''} - Bal: {formatINR(c.currentBalance)}
-                  </option>
-                ))}
-              </select>
+              <CustomerSearchSelect
+                label={t('sales.customer')}
+                required
+                selectedCustomerId={customerId}
+                onSelectCustomer={handleCustomerChange}
+                placeholder={language === 'ta' ? 'வாடிக்கையாளர் பெயர், கடை அல்லது போன் எண் தேடுக...' : 'Search customer by name, shop, phone...'}
+              />
             </div>
 
             <div className="space-y-1">
