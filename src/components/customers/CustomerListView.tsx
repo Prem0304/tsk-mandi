@@ -19,6 +19,7 @@ import {
   ImportSummary
 } from '../../lib/excelExport';
 import { generateCustomerPendingCratesPdf } from '../../lib/pdfGenerator';
+import { CustomerEditModal } from './CustomerEditModal';
 import {
   Users,
   Search,
@@ -32,7 +33,8 @@ import {
   CheckCircle2,
   Phone,
   MapPin,
-  Box
+  Box,
+  Pencil
 } from 'lucide-react';
 
 interface CustomerListViewProps {
@@ -52,18 +54,6 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
 
   // Form State for Add / Edit
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
-  const [name, setName] = useState('');
-  const [shopName, setShopName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [altPhone, setAltPhone] = useState('');
-  const [place, setPlace] = useState('');
-  const [openingBalance, setOpeningBalance] = useState<number>(0);
-  const [openingDate, setOpeningDate] = useState(getTodayDateString());
-  const [openingBigCrates, setOpeningBigCrates] = useState<number>(0);
-  const [openingSmallCrates, setOpeningSmallCrates] = useState<number>(0);
-  const [creditLimit, setCreditLimit] = useState<number | ''>('');
-  const [notes, setNotes] = useState('');
-  const [formError, setFormError] = useState('');
 
   // Excel Import state
   const [importSummary, setImportSummary] = useState<ImportSummary<Customer> | null>(null);
@@ -121,70 +111,13 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
 
   const openAddCustomer = () => {
     setEditCustomer(null);
-    setName('');
-    setShopName('');
-    setPhone('');
-    setAltPhone('');
-    setPlace('');
-    setOpeningBalance(0);
-    setOpeningDate(getTodayDateString());
-    setOpeningBigCrates(0);
-    setOpeningSmallCrates(0);
-    setCreditLimit('');
-    setNotes('');
-    setFormError('');
     setIsAddModalOpen(true);
   };
 
   const openEditCustomer = (c: Customer, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditCustomer(c);
-    setName(c.name);
-    setShopName(c.shopName || '');
-    setPhone(c.phone);
-    setAltPhone(c.altPhone || '');
-    setPlace(c.place || '');
-    setOpeningBalance(c.openingMoneyBalance);
-    setOpeningDate(c.openingBalanceDate);
-    setOpeningBigCrates(c.openingCrates['big'] || 0);
-    setOpeningSmallCrates(c.openingCrates['small'] || 0);
-    setCreditLimit(c.creditLimit || '');
-    setNotes(c.notes || '');
-    setFormError('');
     setIsAddModalOpen(true);
-  };
-
-  const handleSaveCustomer = () => {
-    setFormError('');
-    if (!name.trim()) {
-      setFormError('Customer name is required.');
-      return;
-    }
-    if (!phone.trim() || phone.replace(/\D/g, '').length < 10) {
-      setFormError('Valid 10-digit phone number is required.');
-      return;
-    }
-
-    const customerObj: Customer = {
-      id: editCustomer ? editCustomer.id : `cust-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      name: name.trim(),
-      shopName: shopName.trim() || undefined,
-      phone: phone.trim(),
-      altPhone: altPhone.trim() || undefined,
-      place: place.trim() || undefined,
-      notes: notes.trim() || undefined,
-      openingMoneyBalance: openingBalance,
-      openingBalanceDate: openingDate,
-      openingCrates: { big: openingBigCrates, small: openingSmallCrates },
-      creditLimit: creditLimit === '' ? null : Number(creditLimit),
-      crateLimits: { big: null, small: null },
-      isActive: true,
-      createdAt: editCustomer ? editCustomer.createdAt : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    dbService.saveCustomer(customerObj);
-    setIsAddModalOpen(false);
   };
 
   const handleExportCustomers = () => {
@@ -413,13 +346,16 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1.5 shrink-0">
                     {canEditOrDelete && rawCust && (
                       <button
+                        type="button"
                         onClick={(e) => openEditCustomer(rawCust, e)}
-                        className="p-1.5 text-xs text-slate-400 hover:text-slate-800 rounded-lg hover:bg-slate-100 font-semibold"
+                        className="flex items-center space-x-1 px-2.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold border border-slate-200 active:scale-95 transition-all"
+                        title={language === 'ta' ? 'வாடிக்கையாளர் & பாக்கி விவரங்களை திருத்து' : 'Edit Customer & Balance'}
                       >
-                        Edit
+                        <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{language === 'ta' ? 'திருத்து' : 'Edit'}</span>
                       </button>
                     )}
                     <ArrowRight className="w-5 h-5 text-slate-400" />
@@ -433,184 +369,11 @@ export const CustomerListView: React.FC<CustomerListViewProps> = ({ onSelectCust
       </div>
 
       {/* ADD / EDIT CUSTOMER MODAL */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
-            
-            <div className="bg-tomato text-white px-5 py-4 flex items-center justify-between">
-              <h3 className="font-extrabold text-base">
-                {editCustomer ? 'Edit Customer' : 'Add New Customer'}
-              </h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-white hover:bg-white/10 rounded-lg">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5 space-y-3.5 text-slate-800">
-              
-              {formError && (
-                <div className="bg-rose-50 border border-rose-300 text-rose-800 p-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>{formError}</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Customer Name *</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="e.g. Selvam"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-semibold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Shop Name</label>
-                  <input
-                    type="text"
-                    value={shopName}
-                    onChange={e => setShopName(e.target.value)}
-                    placeholder="e.g. Selvam Stores"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-semibold"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Phone *</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="9876543210"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-semibold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Alt Phone</label>
-                  <input
-                    type="tel"
-                    value={altPhone}
-                    onChange={e => setAltPhone(e.target.value)}
-                    placeholder="Optional"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-semibold"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Place / Market</label>
-                  <input
-                    type="text"
-                    value={place}
-                    onChange={e => setPlace(e.target.value)}
-                    placeholder="e.g. Madurai"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-semibold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Credit Limit (₹)</label>
-                  <input
-                    type="number"
-                    value={creditLimit}
-                    onChange={e => setCreditLimit(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
-                    placeholder="e.g. 50000"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-semibold"
-                  />
-                </div>
-              </div>
-
-              {/* Opening Balances (Only for new customer) */}
-              {!editCustomer && (
-                <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Opening Balances (Day One)
-                  </span>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[11px] text-slate-500 font-bold">Opening Money Owed (₹)</label>
-                      <input
-                        type="number"
-                        value={openingBalance || ''}
-                        onChange={e => setOpeningBalance(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="w-full h-9 px-2 rounded-lg border border-slate-300 text-xs font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-500 font-bold">As-of Date</label>
-                      <input
-                        type="date"
-                        value={openingDate}
-                        onChange={e => setOpeningDate(e.target.value)}
-                        className="w-full h-9 px-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[11px] text-slate-500 font-bold">Opening Big Crates Held</label>
-                      <input
-                        type="number"
-                        value={openingBigCrates || ''}
-                        onChange={e => setOpeningBigCrates(parseInt(e.target.value, 10) || 0)}
-                        placeholder="0"
-                        className="w-full h-9 px-2 rounded-lg border border-slate-300 text-xs font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-500 font-bold">Opening Small Crates Held</label>
-                      <input
-                        type="number"
-                        value={openingSmallCrates || ''}
-                        onChange={e => setOpeningSmallCrates(parseInt(e.target.value, 10) || 0)}
-                        placeholder="0"
-                        className="w-full h-9 px-2 rounded-lg border border-slate-300 text-xs font-bold"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Notes</label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  placeholder="Optional customer notes"
-                  className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm font-medium"
-                />
-              </div>
-
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveCustomer}
-                className="px-5 py-2 rounded-xl bg-tomato hover:bg-rose-700 text-white font-extrabold text-xs shadow-md"
-              >
-                Save Customer
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
+      <CustomerEditModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        customer={editCustomer}
+      />
 
       {/* EXCEL IMPORT PREVIEW & VALIDATION MODAL (SECTION 3.3) */}
       {isImportModalOpen && (

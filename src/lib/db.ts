@@ -351,6 +351,31 @@ class DatabaseService {
       const old = this.state.customers[idx];
       this.state.customers[idx] = { ...customer, updatedAt: new Date().toISOString() };
       this.logAudit('update', 'customer', customer.id, `Updated customer ${customer.name}`, old, customer);
+
+      // Update opening crate movements if modified
+      Object.entries(customer.openingCrates || {}).forEach(([catId, qty]) => {
+        const existingOpIdx = this.state.crateMovements.findIndex(
+          m => m.refType === 'opening' && m.partyId === customer.id && m.categoryId === catId && !m.deletedAt
+        );
+        if (existingOpIdx >= 0) {
+          this.state.crateMovements[existingOpIdx].qtyOut = qty || 0;
+          this.state.crateMovements[existingOpIdx].movementDate = customer.openingBalanceDate;
+        } else if (qty > 0) {
+          this.state.crateMovements.push({
+            id: `cm-op-cust-${customer.id}-${catId}`,
+            movementDate: customer.openingBalanceDate,
+            categoryId: catId,
+            partyType: 'customer',
+            partyId: customer.id,
+            qtyIn: 0,
+            qtyOut: qty,
+            ownership: 'shop',
+            refType: 'opening',
+            notes: 'Opening crates held by customer',
+            createdAt: new Date().toISOString()
+          });
+        }
+      });
     } else {
       this.state.customers.push(customer);
       this.logAudit('create', 'customer', customer.id, `Created customer ${customer.name}`, null, customer);

@@ -16,6 +16,7 @@ import { sharePassbookReminderWhatsApp } from '../../lib/whatsapp';
 import { exportToExcel } from '../../lib/excelExport';
 import { generateCustomerPassbookPdf } from '../../lib/pdfGenerator';
 import { MandiDocumentHeader } from '../common/MandiDocumentHeader';
+import { CustomerEditModal } from './CustomerEditModal';
 import {
   BookOpen,
   ArrowLeft,
@@ -29,7 +30,8 @@ import {
   X,
   Phone,
   MapPin,
-  Calendar
+  Calendar,
+  Pencil
 } from 'lucide-react';
 
 interface CustomerPassbookViewProps {
@@ -64,6 +66,7 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
   const [showSplit, setShowSplit] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWriteoffModalOpen, setIsWriteoffModalOpen] = useState(false);
   const [writeoffAmount, setWriteoffAmount] = useState<number>(0);
   const [writeoffReason, setWriteoffReason] = useState('');
@@ -377,6 +380,18 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
               <Printer className="w-4 h-4 text-tomato" />
               <span>PDF Statement</span>
             </button>
+
+            {canEditOrDelete && customerObj && (
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs active:scale-95 transition-all border border-slate-200"
+                title={language === 'ta' ? 'வாடிக்கையாளர் விவரங்கள் & பாக்கி திருத்து' : 'Edit Customer & Balance Amount'}
+              >
+                <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                <span>{language === 'ta' ? 'திருத்து' : 'Edit Customer'}</span>
+              </button>
+            )}
 
             <button
               onClick={() => onOpenReceivePayment(customerId)}
@@ -723,6 +738,13 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* EDIT CUSTOMER MODAL */}
+      <CustomerEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        customer={customerObj}
+      />
 
     </div>
   );
