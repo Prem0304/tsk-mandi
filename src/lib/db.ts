@@ -135,6 +135,15 @@ class DatabaseService {
 
   constructor() {
     this.state = this.loadInitialState();
+    // One-time automatic clean of dummy/sample records for fresh production state
+    const isCleaned = getStoredItem('tsk_mandi_cleared_prod_v1');
+    if (isCleaned !== 'true') {
+      const currentSettings = this.state.settings || DEFAULT_SETTINGS;
+      this.clearAllData();
+      this.state.settings = currentSettings;
+      this.saveState();
+      setStoredItem('tsk_mandi_cleared_prod_v1', 'true');
+    }
   }
 
   private loadInitialState(): MandiDatabaseState {
@@ -1281,8 +1290,9 @@ class DatabaseService {
   }
 
   public clearAllData() {
+    const currentSettings = this.state?.settings || DEFAULT_SETTINGS;
     this.state = {
-      settings: DEFAULT_SETTINGS,
+      settings: currentSettings,
       categories: INITIAL_CATEGORIES,
       suppliers: [],
       customers: [],

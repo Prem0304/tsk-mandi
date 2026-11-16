@@ -70,13 +70,6 @@ export const App: React.FC = () => {
   const [printedSale, setPrintedSale] = useState<Sale | null>(null);
   const [isBillPrintModalOpen, setIsBillPrintModalOpen] = useState(false);
 
-  // Auto-seed initial demo mandi data if completely fresh state
-  useEffect(() => {
-    if (state.suppliers.length === 0 && state.customers.length === 0 && state.purchases.length === 0) {
-      dbService.loadSampleData();
-    }
-  }, []);
-
   const handleSaleSaved = (newSale: Sale) => {
     setPrintedSale(newSale);
     setIsBillPrintModalOpen(true);
