@@ -25,8 +25,10 @@ import {
   Phone,
   MapPin,
   Box,
-  ArrowRight
+  ArrowRight,
+  Pencil
 } from 'lucide-react';
+import { SupplierEditModal } from './SupplierEditModal';
 
 interface SupplierListViewProps {
   onOpenPaySupplier: (supplierId: string) => void;
@@ -38,11 +40,8 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
 
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  // New Supplier Form State
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedSupplierForEdit, setSelectedSupplierForEdit] = useState<Supplier | null>(null);
   const [altPhone, setAltPhone] = useState('');
   const [place, setPlace] = useState('');
   const [gst, setGst] = useState('');
@@ -64,39 +63,7 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
     });
   }, [supplierSummaries, searchQuery]);
 
-  const handleSaveSupplier = () => {
-    setErrorMsg('');
-    if (!name.trim()) {
-      setErrorMsg('Supplier name is required.');
-      return;
-    }
-    if (!phone.trim()) {
-      setErrorMsg('Phone number is required.');
-      return;
-    }
 
-    const supplier: Supplier = {
-      id: `sup-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      name: name.trim(),
-      phone: phone.trim(),
-      altPhone: altPhone.trim() || undefined,
-      place: place.trim() || undefined,
-      gstNumber: gst.trim() || undefined,
-      openingMoneyBalance: openingBalance,
-      openingBalanceDate: openingDate,
-      openingCrates: { big: openingBig, small: openingSmall },
-      notes: notes.trim() || undefined,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    dbService.saveSupplier(supplier);
-    setIsAddModalOpen(false);
-    setName('');
-    setPhone('');
-    setPlace('');
-  };
 
   const handleExportStatementPdf = (suppId: string) => {
     const supp = state.suppliers.find(s => s.id === suppId);
@@ -135,7 +102,10 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
 
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setSelectedSupplierForEdit(null);
+              setIsEditModalOpen(true);
+            }}
             className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -194,6 +164,19 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
 
                     {/* Pay Supplier Shortcut */}
                     <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          const sObj = state.suppliers.find(x => x.id === supp.supplierId);
+                          setSelectedSupplierForEdit(sObj || null);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="flex items-center space-x-1 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 font-extrabold text-xs active:scale-95 transition-all"
+                        title="Edit Supplier Details, Balance & Crates"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+
                       <button
                         onClick={() => handleExportStatementPdf(supp.supplierId)}
                         className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50"
@@ -349,127 +332,15 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
         )}
       </div>
 
-      {/* ADD SUPPLIER MODAL */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 select-none">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
-            <div className="bg-indigo-600 text-white px-5 py-4 flex items-center justify-between">
-              <h3 className="font-extrabold text-base">Add New Supplier</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-white">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-5 overflow-y-auto space-y-3.5 text-slate-800 text-xs">
-              {errorMsg && (
-                <div className="bg-rose-50 border border-rose-300 text-rose-800 p-2 rounded-xl font-bold">
-                  {errorMsg}
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold block mb-1">Supplier Name *</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="e.g. Ramu Tomato Farm"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold block mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="9876543210"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold block mb-1">Place / Mandi</label>
-                  <input
-                    type="text"
-                    value={place}
-                    onChange={e => setPlace(e.target.value)}
-                    placeholder="e.g. Dindigul"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold block mb-1">GST Number (Optional)</label>
-                  <input
-                    type="text"
-                    value={gst}
-                    onChange={e => setGst(e.target.value.toUpperCase())}
-                    placeholder="e.g. 33AAAAA0000A1Z5"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-semibold uppercase"
-                  />
-                </div>
-              </div>
-
-              {/* Opening Balance */}
-              <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2">
-                <span className="font-bold uppercase text-[11px] text-slate-700 block">
-                  Opening Balances Owed
-                </span>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] text-slate-500 font-bold">Amount I Owe (₹)</label>
-                    <input
-                      type="number"
-                      value={openingBalance || ''}
-                      onChange={e => setOpeningBalance(parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full h-9 px-2 rounded-lg border border-slate-300 text-xs font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] text-slate-500 font-bold">Big / Small Crates Owed</label>
-                    <div className="grid grid-cols-2 gap-1">
-                      <input
-                        type="number"
-                        value={openingBig || ''}
-                        onChange={e => setOpeningBig(parseInt(e.target.value, 10) || 0)}
-                        placeholder="Big"
-                        className="h-9 px-1 rounded-lg border border-slate-300 text-xs font-bold text-center"
-                      />
-                      <input
-                        type="number"
-                        value={openingSmall || ''}
-                        onChange={e => setOpeningSmall(parseInt(e.target.value, 10) || 0)}
-                        placeholder="Small"
-                        className="h-9 px-1 rounded-lg border border-slate-300 text-xs font-bold text-center"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveSupplier}
-                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md"
-              >
-                Save Supplier
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* SUPPLIER ADD / EDIT MODAL */}
+      <SupplierEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedSupplierForEdit(null);
+        }}
+        supplier={selectedSupplierForEdit}
+      />
 
     </div>
   );

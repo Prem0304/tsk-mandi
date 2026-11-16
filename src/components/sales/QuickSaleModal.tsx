@@ -31,8 +31,10 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
 
   const [customerId, setCustomerId] = useState('');
   const [bigQty, setBigQty] = useState<number>(0);
+  const [bigBoughtPrice, setBigBoughtPrice] = useState<number>(300);
   const [bigPrice, setBigPrice] = useState<number>(350);
   const [smallQty, setSmallQty] = useState<number>(0);
+  const [smallBoughtPrice, setSmallBoughtPrice] = useState<number>(200);
   const [smallPrice, setSmallPrice] = useState<number>(240);
   const [amountReceived, setAmountReceived] = useState<number>(0);
   const [errorMsg, setErrorMsg] = useState('');
@@ -40,16 +42,40 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
 
   const customerSelectRef = useRef<HTMLSelectElement>(null);
 
-  // Load default prices on mount/open
+  // Load auto-detected bought & selling prices on open
   useEffect(() => {
     if (isOpen) {
-      const bigRate = dbService.getTodayRate('big')?.selling || 350;
-      const smallRate = dbService.getTodayRate('small')?.selling || 240;
-      setBigPrice(bigRate);
-      setSmallPrice(smallRate);
+      const openBigLot = state.purchaseLines.find(l => l.categoryId === 'big' && l.cratesRemaining > 0);
+      const openSmallLot = state.purchaseLines.find(l => l.categoryId === 'small' && l.cratesRemaining > 0);
+      const bigRate = dbService.getTodayRate('big');
+      const smallRate = dbService.getTodayRate('small');
+
+      const bCost = openBigLot?.effectiveCostPerCrate || openBigLot?.pricePerCrate || bigRate?.buying || 300;
+      const sCost = openSmallLot?.effectiveCostPerCrate || openSmallLot?.pricePerCrate || smallRate?.buying || 200;
+      setBigBoughtPrice(bCost);
+      setSmallBoughtPrice(sCost);
+
+      setBigPrice(bigRate?.selling || (bCost + 50) || 350);
+      setSmallPrice(smallRate?.selling || (sCost + 40) || 240);
       resetForm();
     }
   }, [isOpen]);
+
+  const handleCustomerSelect = (custId: string) => {
+    setCustomerId(custId);
+    if (!custId) return;
+
+    const pastSales = state.sales
+      .filter(s => s.customerId === custId && !s.deletedAt)
+      .sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime());
+
+    if (pastSales.length > 0) {
+      const lastBig = pastSales[0].lines.find(l => l.categoryId === 'big');
+      if (lastBig) setBigPrice(lastBig.pricePerCrate);
+      const lastSmall = pastSales[0].lines.find(l => l.categoryId === 'small');
+      if (lastSmall) setSmallPrice(lastSmall.pricePerCrate);
+    }
+  };
 
   const resetForm = () => {
     setCustomerId('');
@@ -232,7 +258,7 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
             <select
               ref={customerSelectRef}
               value={customerId}
-              onChange={e => setCustomerId(e.target.value)}
+              onChange={e => handleCustomerSelect(e.target.value)}
               className="w-full h-12 px-3 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm focus:border-amber-500 focus:bg-white focus:outline-none"
             >
               <option value="">-- Select Customer --</option>
@@ -245,59 +271,103 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
           </div>
 
           {/* Big Crates */}
-          <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl">
-            <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-              <span>Big Crates (பெரிய)</span>
+          <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2">
+            <div className="flex justify-between text-xs font-bold text-slate-700">
+              <span>Big Crates (பெரிய பெட்டி)</span>
               <span className="text-slate-400">Stock: <strong className="text-slate-800">{bigAvail}</strong></span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                value={bigQty || ''}
-                onChange={e => setBigQty(parseInt(e.target.value, 10) || 0)}
-                placeholder="Qty (பெட்டி)"
-                className="h-12 px-3 rounded-xl border border-slate-300 bg-white font-extrabold text-base text-center focus:border-amber-500 focus:outline-none"
-              />
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                value={bigPrice || ''}
-                onChange={e => setBigPrice(parseFloat(e.target.value) || 0)}
-                placeholder="Price ₹"
-                className="h-12 px-3 rounded-xl border border-slate-300 bg-white font-extrabold text-base text-right focus:border-amber-500 focus:outline-none"
-              />
+            <div className="grid grid-cols-12 gap-2 items-center">
+              <div className="col-span-4">
+                <label className="text-[10px] text-slate-500 font-bold block mb-0.5">Qty (பெட்டி)</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={bigQty || ''}
+                  onChange={e => setBigQty(parseInt(e.target.value, 10) || 0)}
+                  placeholder="Qty"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-300 bg-white font-extrabold text-sm text-center focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+              <div className="col-span-4">
+                <label className="text-[10px] text-slate-500 font-bold block mb-0.5">Bought ₹</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={bigBoughtPrice || ''}
+                  onChange={e => setBigBoughtPrice(parseFloat(e.target.value) || 0)}
+                  placeholder="Buy ₹"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-200 bg-slate-100 font-bold text-xs text-slate-700 text-right focus:bg-white focus:outline-none"
+                />
+              </div>
+              <div className="col-span-4">
+                <label className="text-[10px] text-amber-800 font-bold block mb-0.5">Selling ₹</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={bigPrice || ''}
+                  onChange={e => setBigPrice(parseFloat(e.target.value) || 0)}
+                  placeholder="Sell ₹"
+                  className="w-full h-11 px-2 rounded-xl border-2 border-amber-300 bg-white font-black text-sm text-right focus:border-amber-500 focus:outline-none"
+                />
+              </div>
             </div>
+            {bigQty > 0 && bigPrice > 0 && (
+              <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1 pt-1 border-t border-slate-200/60">
+                <span>Total: <strong className="text-slate-900">{formatINR(bigQty * bigPrice)}</strong></span>
+                <span>Margin: <strong className={bigPrice >= bigBoughtPrice ? 'text-emerald-700' : 'text-rose-600'}>{formatINR(bigPrice - bigBoughtPrice)}/crate</strong></span>
+              </div>
+            )}
           </div>
 
           {/* Small Crates */}
-          <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl">
-            <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-              <span>Small Crates (சிறிய)</span>
+          <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2">
+            <div className="flex justify-between text-xs font-bold text-slate-700">
+              <span>Small Crates (சிறிய பெட்டி)</span>
               <span className="text-slate-400">Stock: <strong className="text-slate-800">{smallAvail}</strong></span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                value={smallQty || ''}
-                onChange={e => setSmallQty(parseInt(e.target.value, 10) || 0)}
-                placeholder="Qty (பெட்டி)"
-                className="h-12 px-3 rounded-xl border border-slate-300 bg-white font-extrabold text-base text-center focus:border-amber-500 focus:outline-none"
-              />
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                value={smallPrice || ''}
-                onChange={e => setSmallPrice(parseFloat(e.target.value) || 0)}
-                placeholder="Price ₹"
-                className="h-12 px-3 rounded-xl border border-slate-300 bg-white font-extrabold text-base text-right focus:border-amber-500 focus:outline-none"
-              />
+            <div className="grid grid-cols-12 gap-2 items-center">
+              <div className="col-span-4">
+                <label className="text-[10px] text-slate-500 font-bold block mb-0.5">Qty (பெட்டி)</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={smallQty || ''}
+                  onChange={e => setSmallQty(parseInt(e.target.value, 10) || 0)}
+                  placeholder="Qty"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-300 bg-white font-extrabold text-sm text-center focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+              <div className="col-span-4">
+                <label className="text-[10px] text-slate-500 font-bold block mb-0.5">Bought ₹</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={smallBoughtPrice || ''}
+                  onChange={e => setSmallBoughtPrice(parseFloat(e.target.value) || 0)}
+                  placeholder="Buy ₹"
+                  className="w-full h-11 px-2 rounded-xl border border-slate-200 bg-slate-100 font-bold text-xs text-slate-700 text-right focus:bg-white focus:outline-none"
+                />
+              </div>
+              <div className="col-span-4">
+                <label className="text-[10px] text-amber-800 font-bold block mb-0.5">Selling ₹</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={smallPrice || ''}
+                  onChange={e => setSmallPrice(parseFloat(e.target.value) || 0)}
+                  placeholder="Sell ₹"
+                  className="w-full h-11 px-2 rounded-xl border-2 border-amber-300 bg-white font-black text-sm text-right focus:border-amber-500 focus:outline-none"
+                />
+              </div>
             </div>
+            {smallQty > 0 && smallPrice > 0 && (
+              <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1 pt-1 border-t border-slate-200/60">
+                <span>Total: <strong className="text-slate-900">{formatINR(smallQty * smallPrice)}</strong></span>
+                <span>Margin: <strong className={smallPrice >= smallBoughtPrice ? 'text-emerald-700' : 'text-rose-600'}>{formatINR(smallPrice - smallBoughtPrice)}/crate</strong></span>
+              </div>
+            )}
           </div>
 
           {/* Amount Received Now */}

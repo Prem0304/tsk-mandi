@@ -22,6 +22,7 @@ interface SaleEntryModalProps {
 interface FormLine {
   categoryId: string;
   crates: number;
+  costPerCrate: number;
   pricePerCrate: number;
 }
 
@@ -38,7 +39,7 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
   const [saleDate, setSaleDate] = useState(getTodayDateString());
   const [billNo, setBillNo] = useState('');
   const [lines, setLines] = useState<FormLine[]>([
-    { categoryId: 'big', crates: 0, pricePerCrate: 0 }
+    { categoryId: 'big', crates: 0, costPerCrate: 300, pricePerCrate: 350 }
   ]);
   const [transportCharge, setTransportCharge] = useState<number>(0);
   const [discount, setDiscount] = useState<number>(0);
@@ -51,7 +52,33 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Generate Bill No on open
+  // Auto-detect Bought Price & Selling Price helper
+  const getAutoRates = (catId: string, custId?: string) => {
+    // 1. Detect Bought Price (Cost):
+    const openLot = state.purchaseLines.find(l => l.categoryId === catId && l.cratesRemaining > 0);
+    const dailyRate = dbService.getTodayRate(catId);
+    const defaultCost = catId === 'big' ? 300 : 200;
+    const cost = openLot?.effectiveCostPerCrate || openLot?.pricePerCrate || dailyRate?.buying || defaultCost;
+
+    // 2. Detect Selling Price:
+    let selling = 0;
+    if (custId) {
+      const pastSales = state.sales
+        .filter(s => s.customerId === custId && !s.deletedAt)
+        .sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime());
+      if (pastSales.length > 0) {
+        const lastLine = pastSales[0].lines.find(l => l.categoryId === catId);
+        if (lastLine) selling = lastLine.pricePerCrate;
+      }
+    }
+    if (!selling) {
+      selling = dailyRate?.selling || (cost + 50) || (catId === 'big' ? 350 : 240);
+    }
+
+    return { costPerCrate: cost, pricePerCrate: selling };
+  };
+
+  // Generate Bill No on open and initialize rates
   useEffect(() => {
     if (isOpen) {
       const prefix = state.settings.billPrefix || 'TSK-';
@@ -62,6 +89,11 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
       setDiscount(0);
       setRoundOff(0);
       setTransportCharge(0);
+
+      const auto = getAutoRates('big', customerId);
+      setLines([
+        { categoryId: 'big', crates: 0, costPerCrate: auto.costPerCrate, pricePerCrate: auto.pricePerCrate }
+      ]);
     }
   }, [isOpen, state.sales.length, state.settings.billPrefix]);
 
@@ -74,25 +106,13 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
     setCustomerId(newCustId);
     if (!newCustId) return;
 
-    // Find customer's last sales
-    const pastSales = state.sales
-      .filter(s => s.customerId === newCustId && !s.deletedAt)
-      .sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime());
-
     setLines(prevLines =>
       prevLines.map(line => {
-        let suggestedPrice = 0;
-        if (pastSales.length > 0) {
-          const lastLine = pastSales[0].lines.find(l => l.categoryId === line.categoryId);
-          if (lastLine) suggestedPrice = lastLine.pricePerCrate;
-        }
-        if (!suggestedPrice) {
-          const rate = dbService.getTodayRate(line.categoryId);
-          suggestedPrice = rate ? rate.selling : 350;
-        }
+        const auto = getAutoRates(line.categoryId, newCustId);
         return {
           ...line,
-          pricePerCrate: suggestedPrice
+          costPerCrate: line.costPerCrate || auto.costPerCrate,
+          pricePerCrate: auto.pricePerCrate
         };
       })
     );
@@ -249,7 +269,9 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
   if (!isOpen) return null;
 
   const handleAddLine = () => {
-    setLines([...lines, { categoryId: 'small', crates: 0, pricePerCrate: 240 }]);
+    const nextCat = lines.some(l => l.categoryId === 'big') ? 'small' : 'big';
+    const auto = getAutoRates(nextCat, customerId);
+    setLines([...lines, { categoryId: nextCat, crates: 0, costPerCrate: auto.costPerCrate, pricePerCrate: auto.pricePerCrate }]);
   };
 
   const handleRemoveLine = (idx: number) => {
@@ -467,20 +489,32 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
               {lines.map((line, idx) => {
                 const avail = dbService.getAvailableStock(line.categoryId);
                 const lineTotal = line.crates * line.pricePerCrate;
+                const cost = line.costPerCrate || 0;
+                const lineMargin = line.pricePerCrate - cost;
+                const lineProfit = line.crates * lineMargin;
+
                 return (
-                  <div key={idx} className="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2">
-                    <div className="grid grid-cols-12 gap-2 items-center">
+                  <div key={idx} className="bg-slate-50 border border-slate-200 p-3 sm:p-3.5 rounded-2xl space-y-2.5">
+                    {/* Top Row: Category, Crates & Delete */}
+                    <div className="grid grid-cols-12 gap-2 items-start">
                       
                       {/* Category */}
-                      <div className="col-span-5 sm:col-span-4">
+                      <div className="col-span-7 sm:col-span-5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">
+                          {t('sales.category')}
+                        </label>
                         <select
                           value={line.categoryId}
                           onChange={e => {
+                            const newCatId = e.target.value;
+                            const auto = getAutoRates(newCatId, customerId);
                             const newLines = [...lines];
-                            newLines[idx].categoryId = e.target.value;
+                            newLines[idx].categoryId = newCatId;
+                            newLines[idx].costPerCrate = auto.costPerCrate;
+                            newLines[idx].pricePerCrate = auto.pricePerCrate;
                             setLines(newLines);
                           }}
-                          className="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white font-bold text-base sm:text-xs"
+                          className="w-full h-10 px-2 rounded-xl border border-slate-300 bg-white font-bold text-xs focus:border-tomato focus:outline-none"
                         >
                           {state.categories.map(c => (
                             <option key={c.id} value={c.id}>
@@ -488,13 +522,16 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                             </option>
                           ))}
                         </select>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
+                        <div className="text-[10px] text-slate-500 mt-1">
                           {t('sales.availableStock')}: <strong className={avail < 10 ? 'text-rose-600' : 'text-slate-800'}>{avail}</strong>
                         </div>
                       </div>
 
                       {/* Crates */}
-                      <div className="col-span-3 sm:col-span-3">
+                      <div className="col-span-4 sm:col-span-4">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">
+                          {t('sales.crates')}
+                        </label>
                         <input
                           type="number"
                           inputMode="numeric"
@@ -505,47 +542,95 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                             newLines[idx].crates = parseInt(e.target.value, 10) || 0;
                             setLines(newLines);
                           }}
-                          placeholder="Crates"
-                          className="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white font-bold text-sm text-center focus:border-tomato focus:outline-none"
-                        />
-                      </div>
-
-                      {/* Price Per Crate */}
-                      <div className="col-span-3 sm:col-span-4">
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          min="0"
-                          value={line.pricePerCrate || ''}
-                          onChange={e => {
-                            const newLines = [...lines];
-                            newLines[idx].pricePerCrate = parseFloat(e.target.value) || 0;
-                            setLines(newLines);
-                          }}
-                          placeholder="Rate ₹"
-                          className="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white font-bold text-sm text-right focus:border-tomato focus:outline-none"
+                          placeholder="Qty"
+                          className="w-full h-10 px-2 rounded-xl border border-slate-300 bg-white font-black text-sm text-center focus:border-tomato focus:outline-none"
                         />
                       </div>
 
                       {/* Delete button */}
-                      <div className="col-span-1 text-right">
+                      <div className="col-span-1 sm:col-span-3 flex justify-end pt-5">
                         {lines.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveLine(idx)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600"
+                            className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                            title="Remove line"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
-
                     </div>
 
-                    <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-200/60 font-semibold text-slate-600">
-                      <span>Line Total:</span>
-                      <span className="text-slate-900 font-bold">{formatINR(lineTotal)}</span>
+                    {/* Rates Row: Bought Price (Auto/Editable) & Selling Price (Auto-Filled/Editable) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white p-2.5 rounded-xl border border-slate-200/80 items-center">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 flex items-center justify-between mb-0.5">
+                          <span>Bought Price (வாங்கியது)</span>
+                          <span className="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1 rounded">Auto</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={line.costPerCrate || ''}
+                            onChange={e => {
+                              const newLines = [...lines];
+                              newLines[idx].costPerCrate = parseFloat(e.target.value) || 0;
+                              setLines(newLines);
+                            }}
+                            placeholder="Cost"
+                            className="w-full h-8 pl-6 pr-2 rounded-lg border border-slate-200 font-bold text-xs text-slate-800 bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-700 flex items-center justify-between mb-0.5">
+                          <span>Selling Price (விற்பனை) *</span>
+                          <span className="text-[9px] text-indigo-600 font-bold bg-indigo-50 px-1 rounded">Auto-Filled</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={line.pricePerCrate || ''}
+                            onChange={e => {
+                              const newLines = [...lines];
+                              newLines[idx].pricePerCrate = parseFloat(e.target.value) || 0;
+                              setLines(newLines);
+                            }}
+                            placeholder="Rate"
+                            className="w-full h-8 pl-6 pr-2 rounded-lg border border-slate-300 font-black text-xs text-indigo-900 bg-white focus:border-tomato focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col justify-center sm:items-end pt-1 sm:pt-0">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Line Total</span>
+                        <span className="text-sm font-black text-slate-900">{formatINR(lineTotal)}</span>
+                      </div>
                     </div>
+
+                    {/* Margin & Profit Preview Badge */}
+                    {line.crates > 0 && line.pricePerCrate > 0 && (
+                      <div className="flex items-center justify-between text-[11px] px-2 pt-0.5 text-slate-600">
+                        <span className="flex items-center space-x-1 font-semibold">
+                          <span>Margin:</span>
+                          <strong className={lineMargin >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
+                            {formatINR(lineMargin)} / crate
+                          </strong>
+                        </span>
+                        <span className="flex items-center space-x-1 font-semibold">
+                          <span>Line Profit:</span>
+                          <strong className={lineProfit >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
+                            {formatINR(lineProfit)}
+                          </strong>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -324,6 +324,34 @@ class DatabaseService {
       const old = this.state.suppliers[idx];
       this.state.suppliers[idx] = { ...supplier, updatedAt: new Date().toISOString() };
       this.logAudit('update', 'supplier', supplier.id, `Updated supplier ${supplier.name}`, old, supplier);
+
+      // Re-sync opening crate movement records for supplier
+      Object.entries(supplier.openingCrates || {}).forEach(([catId, qty]) => {
+        const opCrateId = `cm-op-sup-${supplier.id}-${catId}`;
+        const existingOpIndex = this.state.crateMovements.findIndex(cm => cm.id === opCrateId);
+        if (qty > 0) {
+          const updatedMovement: CrateMovement = {
+            id: opCrateId,
+            movementDate: supplier.openingBalanceDate,
+            categoryId: catId,
+            partyType: 'supplier',
+            partyId: supplier.id,
+            qtyIn: qty,
+            qtyOut: 0,
+            ownership: 'supplier',
+            refType: 'opening',
+            notes: 'Opening crate balance owed to supplier',
+            createdAt: new Date().toISOString()
+          };
+          if (existingOpIndex >= 0) {
+            this.state.crateMovements[existingOpIndex] = updatedMovement;
+          } else {
+            this.state.crateMovements.push(updatedMovement);
+          }
+        } else if (existingOpIndex >= 0) {
+          this.state.crateMovements.splice(existingOpIndex, 1);
+        }
+      });
     } else {
       this.state.suppliers.push(supplier);
       this.logAudit('create', 'supplier', supplier.id, `Created supplier ${supplier.name}`, null, supplier);
