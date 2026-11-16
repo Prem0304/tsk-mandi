@@ -11,7 +11,12 @@ import {
   SupplierCollectionSummary,
   ProfitMetrics
 } from '../types';
-import { isSupabaseConfigured, flushSyncQueue, getSyncQueue } from '../lib/supabase';
+import {
+  isSupabaseConfigured,
+  fetchStateFromCloud,
+  pushStateToCloud,
+  subscribeToCloudChanges
+} from '../lib/supabase';
 
 export type SyncState = 'offline' | 'syncing' | 'synced';
 
@@ -51,8 +56,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const handleOnline = async () => {
       setSyncState('syncing');
-      if (isSupabaseConfigured) {
-        await flushSyncQueue();
+      if (isSupabaseConfigured()) {
+        try {
+          await pushStateToCloud(dbService.getState());
+        } catch {}
       }
       setTimeout(() => setSyncState('synced'), 800);
     };
@@ -64,14 +71,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial sync check
-    if (navigator.onLine && isSupabaseConfigured && getSyncQueue().length > 0) {
-      handleOnline();
-    }
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Supabase Real-Time Cloud Sync (Mobile & Laptop 2-Way Sync)
+  useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      return;
+    }
+
+    let unsubscribeRealtime: (() => void) | null = null;
+
+    const initCloud = async () => {
+      try {
+        setSyncState('syncing');
+        // Initial state sync on load
+        const cloudData = await fetchStateFromCloud();
+        if (cloudData && cloudData.state) {
+          dbService.applyRemoteState(cloudData.state);
+        } else {
+          // Cloud empty; seed with local state
+          await pushStateToCloud(dbService.getState());
+        }
+        setSyncState('synced');
+
+        // Subscribe to live changes broadcast by another device (Mobile or Laptop)
+        unsubscribeRealtime = subscribeToCloudChanges((remoteState) => {
+          setSyncState('syncing');
+          dbService.applyRemoteState(remoteState);
+          setSyncState('synced');
+        });
+      } catch (err) {
+        console.warn('[AppContext] Cloud sync init error:', err);
+        setSyncState('synced');
+      }
+    };
+
+    initCloud();
+
+    return () => {
+      if (unsubscribeRealtime) {
+        unsubscribeRealtime();
+      }
     };
   }, []);
 
@@ -81,8 +125,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     setSyncState('syncing');
-    if (isSupabaseConfigured) {
-      await flushSyncQueue();
+    if (isSupabaseConfigured()) {
+      try {
+        const cloudData = await fetchStateFromCloud();
+        if (cloudData && cloudData.state) {
+          dbService.applyRemoteState(cloudData.state);
+        } else {
+          await pushStateToCloud(dbService.getState());
+        }
+      } catch {}
     }
     setTimeout(() => setSyncState('synced'), 600);
   };

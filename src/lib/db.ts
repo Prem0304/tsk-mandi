@@ -32,6 +32,7 @@ import {
 } from '../types';
 import { calculatePaymentSplit } from './allocationEngine';
 import { getTodayDateString } from './utils';
+import { debouncedPushToCloud } from './supabase';
 
 const DB_NAME = 'tsk_mandi_db';
 const DB_VERSION = 1;
@@ -207,12 +208,26 @@ class DatabaseService {
     };
   }
 
-  public saveState() {
+  public saveState(skipCloudSync: boolean = false) {
+    try {
+      setStoredItem(STORAGE_KEY, JSON.stringify(this.state));
+      this.notifyListeners();
+      if (!skipCloudSync) {
+        debouncedPushToCloud(this.state);
+      }
+    } catch (e) {
+      console.error('Error saving state to storage:', e);
+    }
+  }
+
+  public applyRemoteState(remoteState: MandiDatabaseState) {
+    if (!remoteState || !remoteState.settings) return;
+    this.state = remoteState;
     try {
       setStoredItem(STORAGE_KEY, JSON.stringify(this.state));
       this.notifyListeners();
     } catch (e) {
-      console.error('Error saving state to storage:', e);
+      console.error('Error applying remote state from cloud:', e);
     }
   }
 
