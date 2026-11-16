@@ -10,7 +10,7 @@ import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 import { dbService } from '../../lib/db';
-import { Lock, LogIn, Eye, EyeOff, AlertCircle, Shield, User, Globe, CheckCircle2 } from 'lucide-react';
+import { Lock, LogIn, Eye, EyeOff, AlertCircle, Globe, CheckCircle2 } from 'lucide-react';
 
 export const PinLockModal: React.FC = () => {
   const { isLocked, unlockWithPassword } = useAuth();
@@ -179,49 +179,6 @@ export const PinLockModal: React.FC = () => {
               <span>{language === 'ta' ? 'உள்நுழை (Login)' : 'Login to Portal'}</span>
             </button>
           </form>
-
-          {/* Portal Access Guide Badges */}
-          <div className="pt-2 border-t border-slate-100 space-y-2 text-left">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center">
-              {language === 'ta' ? 'ஒற்றை உள்நுழைவு வழிகாட்டி' : 'Single Login Guide'}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              {/* Admin Portal Card */}
-              <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-2.5 space-y-1">
-                <div className="flex items-center space-x-1 font-black text-amber-900">
-                  <Shield className="w-3.5 h-3.5 text-amber-600" />
-                  <span>{language === 'ta' ? 'அட்மின் போர்டல்' : 'Admin Portal'}</span>
-                </div>
-                <p className="text-[10px] text-amber-800 leading-tight">
-                  {language === 'ta' ? 'லாபம், கொள்முதல், கணக்குகள் & அமைப்புகள்' : 'Wholesale profits, purchases, reports & settings'}
-                </p>
-                <div className="text-[10px] font-mono font-bold text-amber-900 bg-white/70 px-1.5 py-0.5 rounded border border-amber-200 inline-block">
-                  PIN: {settings.ownerPin || '1234'}
-                </div>
-              </div>
-
-              {/* Staff Portal Card */}
-              <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-2.5 space-y-1">
-                <div className="flex items-center space-x-1 font-black text-emerald-900">
-                  <User className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{language === 'ta' ? 'பணியாளர்' : 'Staff Portal'}</span>
-                </div>
-                <p className="text-[10px] text-emerald-800 leading-tight">
-                  {language === 'ta' ? 'விற்பனை பில், வசூல் & காலி பெட்டி வரவு' : 'Sales billing, cash collection & crate returns'}
-                </p>
-                <div className="text-[10px] font-mono font-bold text-emerald-900 bg-white/70 px-1.5 py-0.5 rounded border border-emerald-200 inline-block">
-                  PIN: {settings.staffPin || '5678'}
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-center text-slate-400 pt-1">
-              {language === 'ta'
-                ? '* கடவுச்சொற்களை அட்மின் அமைப்புகளில் (Settings) மாற்றிக்கொள்ளலாம்'
-                : '* Passwords can be customized in Admin Settings'}
-            </p>
-          </div>
 
         </div>
 
