@@ -50,8 +50,19 @@ export const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isIosInstallOpen, setIsIosInstallOpen] = useState(false);
 
-  // Counter Privacy Mode (shields profits on dashboard)
-  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  // Counter Privacy Mode (shields profits across entire app by default)
+  const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('tsk_privacy_mode');
+    return saved !== null ? saved === 'true' : true; // Always shielded by default!
+  });
+
+  const handleTogglePrivacy = () => {
+    setIsPrivacyMode(prev => {
+      const next = !prev;
+      localStorage.setItem('tsk_privacy_mode', String(next));
+      return next;
+    });
+  };
 
   // Active Customer Passbook state (when a customer is clicked)
   const [selectedCustomerIdForPassbook, setSelectedCustomerIdForPassbook] = useState<string | null>(null);
@@ -103,7 +114,7 @@ export const App: React.FC = () => {
           setIsCustomerCollectionOpen(true);
         }}
         isPrivacyMode={isPrivacyMode}
-        onTogglePrivacy={() => setIsPrivacyMode(!isPrivacyMode)}
+        onTogglePrivacy={handleTogglePrivacy}
       />
 
       {/* Main Content Area: Sidebar on Desktop + View Body */}
@@ -147,7 +158,7 @@ export const App: React.FC = () => {
                 setIsCustomerCollectionOpen(true);
               }}
               isPrivacyMode={isPrivacyMode}
-              onTogglePrivacy={() => setIsPrivacyMode(!isPrivacyMode)}
+              onTogglePrivacy={handleTogglePrivacy}
             />
           )}
 
@@ -205,6 +216,7 @@ export const App: React.FC = () => {
             selectedCustomerIdForPassbook ? (
               <CustomerPassbookView
                 customerId={selectedCustomerIdForPassbook}
+                isPrivacyMode={isPrivacyMode}
                 onBack={() => {
                   setSelectedCustomerIdForPassbook(null);
                   setActiveTab('customers');
@@ -253,7 +265,7 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'rates' && (
-            <DailyRateBoardView />
+            <DailyRateBoardView isPrivacyMode={isPrivacyMode} />
           )}
 
           {activeTab === 'expenses' && (
@@ -266,7 +278,7 @@ export const App: React.FC = () => {
 
           {activeTab === 'reports' && (
             role === 'owner' ? (
-              <ReportsView />
+              <ReportsView isPrivacyMode={isPrivacyMode} onTogglePrivacy={handleTogglePrivacy} />
             ) : (
               <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
@@ -345,12 +357,14 @@ export const App: React.FC = () => {
         isOpen={isSaleModalOpen}
         onClose={() => setIsSaleModalOpen(false)}
         onSaleSaved={handleSaleSaved}
+        isPrivacyMode={isPrivacyMode}
       />
 
       <QuickSaleModal
         isOpen={isQuickSaleModalOpen}
         onClose={() => setIsQuickSaleModalOpen(false)}
         onSaleSaved={handleSaleSaved}
+        isPrivacyMode={isPrivacyMode}
       />
 
       <PurchaseEntryModal

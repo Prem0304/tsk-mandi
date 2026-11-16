@@ -21,12 +21,28 @@ import {
   DollarSign,
   PieChart,
   Box,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
-export const ReportsView: React.FC = () => {
+interface ReportsViewProps {
+  isPrivacyMode?: boolean;
+  onTogglePrivacy?: () => void;
+}
+
+export const ReportsView: React.FC<ReportsViewProps> = ({
+  isPrivacyMode,
+  onTogglePrivacy
+}) => {
   const { t, language } = useI18n();
   const { state, customerSummaries, supplierSummaries } = useApp();
+  const [internalPrivacy, setInternalPrivacy] = useState(true);
+  const privacyActive = isPrivacyMode !== undefined ? isPrivacyMode : internalPrivacy;
+  const togglePrivacy = () => {
+    if (onTogglePrivacy) onTogglePrivacy();
+    else setInternalPrivacy(!internalPrivacy);
+  };
 
   const [activeReport, setActiveReport] = useState<
     'profit' | 'lots' | 'collection_split' | 'sales_reg' | 'purchase_reg' | 'pending_crates'
@@ -203,6 +219,21 @@ export const ReportsView: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Privacy Shield Toggle */}
+          <button
+            type="button"
+            onClick={togglePrivacy}
+            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+              privacyActive
+                ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-inner'
+                : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 shadow-xs'
+            }`}
+            title={privacyActive ? 'Privacy Active (Profits hidden)' : 'Counter Shield (Click to mask profits)'}
+          >
+            {privacyActive ? <EyeOff className="w-3.5 h-3.5 text-amber-800" /> : <Eye className="w-3.5 h-3.5 text-slate-500" />}
+            <span>{privacyActive ? (language === 'ta' ? 'ரகசிய முறை இயக்கத்தில்' : 'Shield ON') : (language === 'ta' ? 'ரகசிய முறை' : 'Shield Profit')}</span>
+          </button>
+
           {activeReport === 'pending_crates' && (
             <button
               onClick={handleDownloadPendingPdf}
@@ -281,8 +312,8 @@ export const ReportsView: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-5 rounded-3xl shadow-sm">
               <span className="text-xs font-semibold text-emerald-100">BOOKED PROFIT</span>
-              <div className="text-3xl font-black mt-1">
-                {formatINR(profitMetrics.bookedProfit)}
+              <div className={`text-3xl font-black mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(profitMetrics.bookedProfit)}
               </div>
               <p className="text-[11px] text-emerald-100/80 mt-1">
                 Sales − FIFO Cost − Wastage − Expenses − Discounts
@@ -291,8 +322,8 @@ export const ReportsView: React.FC = () => {
 
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-5 rounded-3xl shadow-sm">
               <span className="text-xs font-semibold text-blue-100">REALISED PROFIT</span>
-              <div className="text-3xl font-black mt-1">
-                {formatINR(profitMetrics.realisedProfit)}
+              <div className={`text-3xl font-black mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(profitMetrics.realisedProfit)}
               </div>
               <p className="text-[11px] text-blue-100/80 mt-1">
                 Profit share of cash actually collected
@@ -301,8 +332,8 @@ export const ReportsView: React.FC = () => {
 
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 rounded-3xl shadow-sm">
               <span className="text-xs font-semibold text-amber-100">PENDING PROFIT</span>
-              <div className="text-3xl font-black mt-1">
-                {formatINR(profitMetrics.pendingProfit)}
+              <div className={`text-3xl font-black mt-1 transition-all ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                {privacyActive ? '••••••' : formatINR(profitMetrics.pendingProfit)}
               </div>
               <p className="text-[11px] text-amber-100/80 mt-1">
                 Booked − Realised (Locked in credit)
@@ -341,8 +372,8 @@ export const ReportsView: React.FC = () => {
               </div>
               <div className="flex justify-between py-2 border-t-2 border-slate-200 font-black text-sm">
                 <span>Final Booked Net Profit</span>
-                <span className={profitMetrics.bookedProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}>
-                  {formatINR(profitMetrics.bookedProfit)}
+                <span className={`${profitMetrics.bookedProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'} ${privacyActive ? 'blur-sm select-none' : ''}`}>
+                  {privacyActive ? '••••••' : formatINR(profitMetrics.bookedProfit)}
                 </span>
               </div>
             </div>
@@ -380,8 +411,8 @@ export const ReportsView: React.FC = () => {
                     <td className="p-3 text-center font-bold text-amber-700">{l.cratesRemaining}</td>
                     <td className="p-3 text-right">{formatINR(l.costPerCrate)}</td>
                     <td className="p-3 text-right font-bold">{formatINR(l.salesValue)}</td>
-                    <td className="p-3 text-right font-black text-emerald-700">{formatINR(l.bookedProfit)}</td>
-                    <td className="p-3 pr-4 text-right font-black text-blue-700">{formatINR(l.realisedProfit)}</td>
+                    <td className="p-3 text-right font-black text-emerald-700">{privacyActive ? '••••••' : formatINR(l.bookedProfit)}</td>
+                    <td className="p-3 pr-4 text-right font-black text-blue-700">{privacyActive ? '••••••' : formatINR(l.realisedProfit)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -418,7 +449,7 @@ export const ReportsView: React.FC = () => {
                       <td className="p-3 text-right font-extrabold text-slate-900">{formatINR(c.amount)}</td>
                       <td className="p-3 text-right font-bold text-amber-900">{formatINR(c.supplierShare)}</td>
                       <td className="p-3 text-right font-bold text-blue-800">{formatINR(c.transportShare)}</td>
-                      <td className="p-3 pr-4 text-right font-black text-emerald-700">{formatINR(c.profitShare)}</td>
+                      <td className="p-3 pr-4 text-right font-black text-emerald-700">{privacyActive ? '••••••' : formatINR(c.profitShare)}</td>
                     </tr>
                   ))
                 )}

@@ -38,6 +38,7 @@ interface CustomerPassbookViewProps {
   customerId: string;
   onBack: () => void;
   onOpenReceivePayment: (customerId: string) => void;
+  isPrivacyMode?: boolean;
 }
 
 interface PassbookRow {
@@ -57,7 +58,8 @@ interface PassbookRow {
 export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
   customerId,
   onBack,
-  onOpenReceivePayment
+  onOpenReceivePayment,
+  isPrivacyMode = true
 }) => {
   const { t, language } = useI18n();
   const { canSeeProfit, canEditOrDelete, requestActionAuthorization } = useAuth();
@@ -560,7 +562,7 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
                   {row.allocations.map((a, i) => (
                     <div key={i} className="flex justify-between">
                       <span>{a.supplierName}:</span>
-                      <span>Cost: {formatINR(a.supplierShare)} | Profit: <strong className="text-emerald-700">{formatINR(a.profitShare)}</strong></span>
+                      <span>Cost: {formatINR(a.supplierShare)} | Profit: <strong className="text-emerald-700">{isPrivacyMode ? '••••••' : formatINR(a.profitShare)}</strong></span>
                     </div>
                   ))}
                 </div>
@@ -646,7 +648,7 @@ export const CustomerPassbookView: React.FC<CustomerPassbookViewProps> = ({
                             <span className="font-bold">Split:</span>
                             {row.allocations.map((a, i) => (
                               <span key={i} className="bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300">
-                                {a.supplierName}: Cleared Cost: <strong>{formatINR(a.supplierShare)}</strong> | Realised Profit: <strong className="text-emerald-700">{formatINR(a.profitShare)}</strong>
+                                {a.supplierName}: Cleared Cost: <strong>{formatINR(a.supplierShare)}</strong> | Realised Profit: <strong className="text-emerald-700">{isPrivacyMode ? '••••••' : formatINR(a.profitShare)}</strong>
                               </span>
                             ))}
                           </div>

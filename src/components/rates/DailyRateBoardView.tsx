@@ -21,7 +21,13 @@ import {
 } from 'recharts';
 import { TrendingUp, Save, History, Check, Calendar } from 'lucide-react';
 
-export const DailyRateBoardView: React.FC = () => {
+interface DailyRateBoardViewProps {
+  isPrivacyMode?: boolean;
+}
+
+export const DailyRateBoardView: React.FC<DailyRateBoardViewProps> = ({
+  isPrivacyMode = true
+}) => {
   const { t, language } = useI18n();
   const { state } = useApp();
   const { requestActionAuthorization } = useAuth();
@@ -128,7 +134,7 @@ export const DailyRateBoardView: React.FC = () => {
               Big Crate (பெரிய பெட்டி)
             </h3>
             <span className="text-xs bg-rose-50 text-tomato font-bold px-2.5 py-1 rounded-full">
-              Margin: {formatINR(bigSelling - bigBuying)}
+              Margin: {isPrivacyMode ? '••••••' : formatINR(bigSelling - bigBuying)}
             </span>
           </div>
 
@@ -168,7 +174,7 @@ export const DailyRateBoardView: React.FC = () => {
               Small Crate (சிறிய பெட்டி)
             </h3>
             <span className="text-xs bg-rose-50 text-tomato font-bold px-2.5 py-1 rounded-full">
-              Margin: {formatINR(smallSelling - smallBuying)}
+              Margin: {isPrivacyMode ? '••••••' : formatINR(smallSelling - smallBuying)}
             </span>
           </div>
 

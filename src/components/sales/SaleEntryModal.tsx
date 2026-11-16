@@ -18,6 +18,7 @@ interface SaleEntryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaleSaved: (sale: Sale) => void;
+  isPrivacyMode?: boolean;
 }
 
 interface FormLine {
@@ -30,7 +31,8 @@ interface FormLine {
 export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
   isOpen,
   onClose,
-  onSaleSaved
+  onSaleSaved,
+  isPrivacyMode = true
 }) => {
   const { t, language } = useI18n();
   const { requestActionAuthorization } = useAuth();
@@ -613,13 +615,13 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
                         <span className="flex items-center space-x-1 font-semibold">
                           <span>Margin:</span>
                           <strong className={lineMargin >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
-                            {formatINR(lineMargin)} / crate
+                            {isPrivacyMode ? '••••••' : `${formatINR(lineMargin)} / crate`}
                           </strong>
                         </span>
                         <span className="flex items-center space-x-1 font-semibold">
                           <span>Line Profit:</span>
                           <strong className={lineProfit >= 0 ? 'text-emerald-700' : 'text-rose-600'}>
-                            {formatINR(lineProfit)}
+                            {isPrivacyMode ? '••••••' : formatINR(lineProfit)}
                           </strong>
                         </span>
                       </div>
@@ -635,12 +637,12 @@ export const SaleEntryModal: React.FC<SaleEntryModalProps> = ({
             <div className="flex items-center justify-between font-bold text-emerald-900">
               <span>{t('sales.liveMarginPreview')}</span>
               <span className="bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded text-[10px]">
-                {allocationPreview.marginPct.toFixed(1)}% {t('sales.margin')}
+                {isPrivacyMode ? '••••••' : `${allocationPreview.marginPct.toFixed(1)}% ${t('sales.margin')}`}
               </span>
             </div>
             <div className="flex justify-between text-emerald-800">
-              <span>FIFO Lot Cost: <strong>{formatINR(allocationPreview.totalCost)}</strong></span>
-              <span>Booked Profit: <strong className="text-emerald-700">{formatINR(allocationPreview.totalProfit)}</strong></span>
+              <span>FIFO Lot Cost: <strong>{isPrivacyMode ? '••••••' : formatINR(allocationPreview.totalCost)}</strong></span>
+              <span>Booked Profit: <strong className="text-emerald-700">{isPrivacyMode ? '••••••' : formatINR(allocationPreview.totalProfit)}</strong></span>
             </div>
           </div>
 

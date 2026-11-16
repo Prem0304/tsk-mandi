@@ -62,7 +62,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { t, language } = useI18n();
   const { canSeeProfit, canCreateSales } = useAuth();
-  const [internalPrivacy, setInternalPrivacy] = useState(false);
+  const [internalPrivacy, setInternalPrivacy] = useState(true);
   const privacyActive = isPrivacyMode !== undefined ? isPrivacyMode : internalPrivacy;
   const togglePrivacy = () => {
     if (onTogglePrivacy) onTogglePrivacy();

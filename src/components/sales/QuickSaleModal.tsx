@@ -19,12 +19,14 @@ interface QuickSaleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaleSaved: (sale: Sale) => void;
+  isPrivacyMode?: boolean;
 }
 
 export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
   isOpen,
   onClose,
-  onSaleSaved
+  onSaleSaved,
+  isPrivacyMode = true
 }) => {
   const { t, language } = useI18n();
   const { requestActionAuthorization } = useAuth();
@@ -308,7 +310,7 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
             {bigQty > 0 && bigPrice > 0 && (
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1 pt-1 border-t border-slate-200/60">
                 <span>Total: <strong className="text-slate-900">{formatINR(bigQty * bigPrice)}</strong></span>
-                <span>Margin: <strong className={bigPrice >= bigBoughtPrice ? 'text-emerald-700' : 'text-rose-600'}>{formatINR(bigPrice - bigBoughtPrice)}/crate</strong></span>
+                <span>Margin: <strong className={bigPrice >= bigBoughtPrice ? 'text-emerald-700' : 'text-rose-600'}>{isPrivacyMode ? '••••••' : `${formatINR(bigPrice - bigBoughtPrice)}/crate`}</strong></span>
               </div>
             )}
           </div>
@@ -358,7 +360,7 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
             {smallQty > 0 && smallPrice > 0 && (
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1 pt-1 border-t border-slate-200/60">
                 <span>Total: <strong className="text-slate-900">{formatINR(smallQty * smallPrice)}</strong></span>
-                <span>Margin: <strong className={smallPrice >= smallBoughtPrice ? 'text-emerald-700' : 'text-rose-600'}>{formatINR(smallPrice - smallBoughtPrice)}/crate</strong></span>
+                <span>Margin: <strong className={smallPrice >= smallBoughtPrice ? 'text-emerald-700' : 'text-rose-600'}>{isPrivacyMode ? '••••••' : `${formatINR(smallPrice - smallBoughtPrice)}/crate`}</strong></span>
               </div>
             )}
           </div>

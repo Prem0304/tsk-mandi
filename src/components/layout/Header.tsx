@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   onOpenInstall,
   onOpenCollection,
-  isPrivacyMode = false,
+  isPrivacyMode = true,
   onTogglePrivacy
 }) => {
   const { language, setLanguage, t } = useI18n();
