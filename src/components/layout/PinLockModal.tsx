@@ -1,126 +1,229 @@
 // ============================================================================
-// 4-DIGIT PIN LOCK MODAL WITH NUMERIC TOUCH KEYPAD
-// Rapid phone unlock at the mandi floor
+// SINGLE LOGIN MODAL (ADMIN & STAFF UNIFIED PORTAL ENTRY)
+// Typeable keyboard input (not virtual touch buttons)
+// Entering Admin Password -> Enters Admin/Owner Portal (full profits & settings)
+// Entering Staff Password -> Enters Staff Portal (sales, counter billing & crates)
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { Lock, Delete, AlertCircle } from 'lucide-react';
+import { UserRole } from '../../types';
+import { dbService } from '../../lib/db';
+import { Lock, LogIn, Eye, EyeOff, AlertCircle, Shield, User, Globe, CheckCircle2 } from 'lucide-react';
 
 export const PinLockModal: React.FC = () => {
-  const { isLocked, unlockWithPin } = useAuth();
-  const { t, language } = useI18n();
-  const [pin, setPin] = useState('');
+  const { isLocked, unlockWithPassword } = useAuth();
+  const { language, setLanguage } = useI18n();
+
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
+  const [successRole, setSuccessRole] = useState<UserRole | null>(null);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the input whenever locked
+  useEffect(() => {
+    if (isLocked) {
+      setPassword('');
+      setError(false);
+      setSuccessRole(null);
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isLocked]);
 
   if (!isLocked) return null;
 
-  const handleDigit = (digit: string) => {
-    if (pin.length < 4) {
-      const nextPin = pin + digit;
-      setPin(nextPin);
-      setError(false);
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError(false);
 
-      if (nextPin.length === 4) {
-        setTimeout(() => {
-          const success = unlockWithPin(nextPin);
-          if (!success) {
-            setError(true);
-            setPin('');
-          }
-        }, 150);
-      }
+    if (!password.trim()) {
+      setError(true);
+      inputRef.current?.focus();
+      return;
+    }
+
+    const result = unlockWithPassword(password);
+    if (result.success && result.role) {
+      setSuccessRole(result.role);
+    } else {
+      setError(true);
+      setPassword('');
+      inputRef.current?.focus();
     }
   };
 
-  const handleDelete = () => {
-    setPin(prev => prev.slice(0, -1));
-    setError(false);
+  const toggleLanguage = () => {
+    setLanguage(language === 'ta' ? 'en' : 'ta');
   };
 
-  const handleClear = () => {
-    setPin('');
-    setError(false);
-  };
+  const settings = dbService.getState().settings;
+  const shopName = language === 'ta' && settings.shopNameTa ? settings.shopNameTa : (settings.shopName || 'T.S.K Tomato Mandi');
+  const god1 = language === 'ta' && settings.godName1Ta ? settings.godName1Ta : (settings.godName1 || 'ஸ்ரீ வலகுருநாதன் துணை');
+  const god2 = language === 'ta' && settings.godName2Ta ? settings.godName2Ta : (settings.godName2 || 'ஸ்ரீ அங்காளஈஸ்வரி துணை');
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-4 safe-area-pt safe-area-pb select-none">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xs w-full shadow-2xl text-center border border-slate-200 my-auto animate-in zoom-in-95 duration-200 shrink-0">
+    <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-4 safe-area-pt safe-area-pb">
+      <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200">
         
-        {/* Mandi icon */}
-        <div className="w-16 h-16 rounded-full bg-rose-50 text-tomato mx-auto flex items-center justify-center mb-4 shadow-inner">
-          <Lock className="w-8 h-8" />
-        </div>
-
-        <h2 className="text-xl font-black text-slate-900 mb-1">
-          {language === 'ta' ? 'பயன்பாட்டு அணுகல் கடவுச்சொல்' : 'App Access Password'}
-        </h2>
-        <p className="text-xs font-semibold text-slate-500 mb-6">
-          T.S.K Tomato & Vegetable Mandi • (Password 1)
-        </p>
-
-        {/* 4 Pin Dots */}
-        <div className="flex justify-center space-x-4 mb-6">
-          {[0, 1, 2, 3].map(i => (
-            <div
-              key={i}
-              className={`w-4 h-4 rounded-full border-2 transition-all ${
-                pin.length > i
-                  ? 'bg-tomato border-tomato scale-110'
-                  : 'bg-slate-100 border-slate-300'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Error message */}
-        {error && (
-          <div className="flex items-center justify-center space-x-1 text-xs text-rose-600 font-medium mb-4 animate-shake">
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>{t('app.incorrectPin')}</span>
+        {/* Top Devotional Header */}
+        <div className="bg-gradient-to-r from-tomato via-rose-600 to-amber-600 px-4 py-2.5 text-white flex items-center justify-between shadow-xs">
+          <div className="text-[10px] font-black tracking-wide truncate max-w-[240px]">
+            {god1} • {god2}
           </div>
-        )}
-
-        {/* Numeric Keypad */}
-        <div className="grid grid-cols-3 gap-3 mb-2">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
-            <button
-              key={d}
-              onClick={() => handleDigit(d)}
-              className="h-14 rounded-2xl bg-slate-50 hover:bg-slate-100 active:bg-tomato active:text-white text-slate-800 text-2xl font-bold transition-all shadow-sm active:scale-95 border border-slate-200/80"
-            >
-              {d}
-            </button>
-          ))}
+          
+          {/* Language Switcher */}
           <button
-            onClick={handleClear}
-            className="h-14 rounded-2xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 text-sm font-semibold transition-all active:scale-95 border border-slate-200/80"
+            type="button"
+            onClick={toggleLanguage}
+            className="flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-black/20 hover:bg-black/30 text-[10px] font-black border border-white/20 active:scale-95 transition-all"
+            title="Toggle Language / மொழியை மாற்றுக"
           >
-            C
-          </button>
-          <button
-            onClick={() => handleDigit('0')}
-            className="h-14 rounded-2xl bg-slate-50 hover:bg-slate-100 active:bg-tomato active:text-white text-slate-800 text-2xl font-bold transition-all shadow-sm active:scale-95 border border-slate-200/80"
-          >
-            0
-          </button>
-          <button
-            onClick={handleDelete}
-            className="h-14 rounded-2xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-95 border border-slate-200/80"
-          >
-            <Delete className="w-6 h-6" />
+            <Globe className="w-3 h-3" />
+            <span>{language === 'ta' ? 'English' : 'தமிழ்'}</span>
           </button>
         </div>
 
-        <p className="text-[11px] text-slate-500 mt-2 font-medium">
-          {language === 'ta'
-            ? '👑 உரிமையாளர்: 1234 • 👤 பணியாளர்: 5678'
-            : '👑 Owner PIN: 1234 • 👤 Staff PIN: 5678'}
-        </p>
-        <p className="text-[10px] text-slate-400 mt-0.5">
-          {language === 'ta' ? '(அமைப்புகளில் மாற்றிக்கொள்ளலாம்)' : '(Configurable in Settings)'}
-        </p>
+        {/* Content Body */}
+        <div className="p-5 sm:p-6 space-y-4 text-center">
+          
+          {/* Brand Icon & Title */}
+          <div>
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-tomato mx-auto flex items-center justify-center mb-2 shadow-inner">
+              <Lock className="w-7 h-7" />
+            </div>
+            
+            <h2 className="text-lg font-black text-slate-900 leading-tight">
+              {shopName}
+            </h2>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">
+              {language === 'ta' ? 'ஒருங்கிணைந்த மண்டி உள்நுழைவு' : 'Single Mandi Login Portal'}
+            </p>
+          </div>
+
+          {/* Success Banner when logged in */}
+          {successRole && (
+            <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-3 text-emerald-800 text-xs font-black flex items-center justify-center space-x-2 animate-in zoom-in-95">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>
+                {successRole === 'owner'
+                  ? (language === 'ta' ? '👑 உரிமையாளர் போர்டல் திறக்கப்பட்டது!' : '👑 Admin Portal Unlocked!')
+                  : (language === 'ta' ? '👤 பணியாளர் போர்டல் திறக்கப்பட்டது!' : '👤 Staff Portal Unlocked!')}
+              </span>
+            </div>
+          )}
+
+          {/* Typeable Password Input Form */}
+          <form onSubmit={handleSubmit} className="space-y-3 pt-1">
+            <div className="space-y-1.5 text-left">
+              <label className="text-xs font-bold text-slate-700 block">
+                {language === 'ta' ? 'கடவுச்சொல் உள்ளிடவும் (Type Password):' : 'Enter Password (Type using Keyboard):'}
+              </label>
+
+              <div className="relative flex items-center">
+                <input
+                  ref={inputRef}
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => {
+                    setPassword(e.target.value);
+                    setError(false);
+                  }}
+                  placeholder={language === 'ta' ? 'கடவுச்சொல்லை டைப் செய்க...' : 'Type password...'}
+                  autoFocus
+                  autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  className={`w-full h-13 pl-4 pr-11 text-center text-xl font-mono font-black tracking-wider rounded-2xl border-2 bg-slate-50 focus:bg-white transition-all outline-none ${
+                    error
+                      ? 'border-rose-500 bg-rose-50/50 text-rose-900 animate-shake'
+                      : 'border-slate-300 focus:border-tomato focus:ring-4 focus:ring-rose-100 text-slate-900'
+                  }`}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 p-1.5 text-slate-400 hover:text-slate-700 active:scale-95 transition-all"
+                  tabIndex={-1}
+                  title={showPassword ? 'Hide' : 'Show'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="flex items-center justify-center space-x-1.5 text-xs text-rose-600 font-bold bg-rose-50 py-1.5 px-3 rounded-xl border border-rose-200 animate-shake">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>
+                  {language === 'ta'
+                    ? 'தவறான கடவுச்சொல்! (மீண்டும் முயற்சிக்கவும்)'
+                    : 'Incorrect password! Please try again.'}
+                </span>
+              </div>
+            )}
+
+            {/* Type to Login Submit Button */}
+            <button
+              type="submit"
+              className="w-full h-12 bg-tomato hover:bg-rose-700 active:scale-98 text-white font-black text-sm rounded-2xl shadow-lg shadow-rose-900/20 transition-all flex items-center justify-center space-x-2 mt-2"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>{language === 'ta' ? 'உள்நுழை (Login)' : 'Login to Portal'}</span>
+            </button>
+          </form>
+
+          {/* Portal Access Guide Badges */}
+          <div className="pt-2 border-t border-slate-100 space-y-2 text-left">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center">
+              {language === 'ta' ? 'ஒற்றை உள்நுழைவு வழிகாட்டி' : 'Single Login Guide'}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              {/* Admin Portal Card */}
+              <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-2.5 space-y-1">
+                <div className="flex items-center space-x-1 font-black text-amber-900">
+                  <Shield className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{language === 'ta' ? 'அட்மின் போர்டல்' : 'Admin Portal'}</span>
+                </div>
+                <p className="text-[10px] text-amber-800 leading-tight">
+                  {language === 'ta' ? 'லாபம், கொள்முதல், கணக்குகள் & அமைப்புகள்' : 'Wholesale profits, purchases, reports & settings'}
+                </p>
+                <div className="text-[10px] font-mono font-bold text-amber-900 bg-white/70 px-1.5 py-0.5 rounded border border-amber-200 inline-block">
+                  PIN: {settings.ownerPin || '1234'}
+                </div>
+              </div>
+
+              {/* Staff Portal Card */}
+              <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-2.5 space-y-1">
+                <div className="flex items-center space-x-1 font-black text-emerald-900">
+                  <User className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{language === 'ta' ? 'பணியாளர்' : 'Staff Portal'}</span>
+                </div>
+                <p className="text-[10px] text-emerald-800 leading-tight">
+                  {language === 'ta' ? 'விற்பனை பில், வசூல் & காலி பெட்டி வரவு' : 'Sales billing, cash collection & crate returns'}
+                </p>
+                <div className="text-[10px] font-mono font-bold text-emerald-900 bg-white/70 px-1.5 py-0.5 rounded border border-emerald-200 inline-block">
+                  PIN: {settings.staffPin || '5678'}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-center text-slate-400 pt-1">
+              {language === 'ta'
+                ? '* கடவுச்சொற்களை அட்மின் அமைப்புகளில் (Settings) மாற்றிக்கொள்ளலாம்'
+                : '* Passwords can be customized in Admin Settings'}
+            </p>
+          </div>
+
+        </div>
 
       </div>
     </div>

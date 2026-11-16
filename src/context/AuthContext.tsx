@@ -18,6 +18,7 @@ interface AuthContextType {
   isLocked: boolean;
   lockApp: () => void;
   unlockWithPin: (pin: string) => boolean;
+  unlockWithPassword: (password: string) => { success: boolean; role?: UserRole };
   switchToStaff: () => void;
   switchToOwner: (pin: string) => boolean;
   activeChallenge: ActionAuthChallenge | null;
@@ -59,26 +60,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLocked(true);
   };
 
-  const unlockWithPin = (enteredPin: string): boolean => {
+  const unlockWithPassword = (enteredPass: string): { success: boolean; role?: UserRole } => {
     const settings = dbService.getState().settings;
-    const ownerPin = settings.ownerPin || settings.appPin || '1234';
-    const staffPin = settings.staffPin || '5678';
+    const ownerPin = (settings.ownerPin || settings.appPin || '1234').trim();
+    const staffPin = (settings.staffPin || '5678').trim();
+    const clean = (enteredPass || '').trim();
 
-    if (enteredPin.trim() === ownerPin.trim()) {
+    if (clean === ownerPin) {
       setRole('owner');
       setIsLocked(false);
       lastActivityRef.current = Date.now();
-      return true;
+      return { success: true, role: 'owner' };
     }
 
-    if (enteredPin.trim() === staffPin.trim()) {
+    if (clean === staffPin) {
       setRole('staff');
       setIsLocked(false);
       lastActivityRef.current = Date.now();
-      return true;
+      return { success: true, role: 'staff' };
     }
 
-    return false;
+    return { success: false };
+  };
+
+  const unlockWithPin = (enteredPin: string): boolean => {
+    return unlockWithPassword(enteredPin).success;
   };
 
   const switchToStaff = () => {
@@ -167,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLocked,
         lockApp,
         unlockWithPin,
+        unlockWithPassword,
         switchToStaff,
         switchToOwner,
         activeChallenge,
