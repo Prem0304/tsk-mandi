@@ -8,7 +8,7 @@ import React, { useState, useMemo } from 'react';
 import { useI18n } from '../../i18n/i18nContext';
 import { useApp } from '../../context/AppContext';
 import { dbService } from '../../lib/db';
-import { Supplier } from '../../types';
+import { Supplier, PurchaseLine } from '../../types';
 import { formatINR, formatDate, getTodayDateString } from '../../lib/utils';
 import { exportToExcel, downloadSupplierTemplate } from '../../lib/excelExport';
 import { generateSupplierStatementPdf } from '../../lib/pdfGenerator';
@@ -29,6 +29,7 @@ import {
   Pencil
 } from 'lucide-react';
 import { SupplierEditModal } from './SupplierEditModal';
+import { LotEditModal } from '../purchases/LotEditModal';
 
 interface SupplierListViewProps {
   onOpenPaySupplier: (supplierId: string) => void;
@@ -42,15 +43,8 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSupplierForEdit, setSelectedSupplierForEdit] = useState<Supplier | null>(null);
-  const [altPhone, setAltPhone] = useState('');
-  const [place, setPlace] = useState('');
-  const [gst, setGst] = useState('');
-  const [openingBalance, setOpeningBalance] = useState<number>(0);
-  const [openingDate, setOpeningDate] = useState(getTodayDateString());
-  const [openingBig, setOpeningBig] = useState<number>(0);
-  const [openingSmall, setOpeningSmall] = useState<number>(0);
-  const [notes, setNotes] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [selectedLotForEdit, setSelectedLotForEdit] = useState<PurchaseLine | null>(null);
+  const [isLotEditModalOpen, setIsLotEditModalOpen] = useState(false);
 
   const filteredSuppliers = useMemo(() => {
     return supplierSummaries.filter(s => {
@@ -290,9 +284,23 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
                             <div key={lot.id} className="bg-white p-3 rounded-2xl border border-slate-200 text-xs space-y-2">
                               <div className="flex justify-between items-center font-bold">
                                 <span className="text-indigo-900 font-mono text-sm">Lot {lot.lotNo} ({lot.categoryId.toUpperCase()})</span>
-                                <span className="text-slate-600">
-                                  Remaining: <strong className="text-slate-900">{lot.cratesRemaining}</strong> / {lot.cratesPurchased} crates
-                                </span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-slate-600">
+                                    Remaining: <strong className="text-slate-900">{lot.cratesRemaining}</strong> / {lot.cratesPurchased}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedLotForEdit(lot);
+                                      setIsLotEditModalOpen(true);
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] border border-blue-200 flex items-center space-x-1 transition-all active:scale-95"
+                                    title="Edit Lot Price & Crates"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                    <span>Edit Lot</span>
+                                  </button>
+                                </div>
                               </div>
 
                               <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-600">
@@ -340,6 +348,16 @@ export const SupplierListView: React.FC<SupplierListViewProps> = ({ onOpenPaySup
           setSelectedSupplierForEdit(null);
         }}
         supplier={selectedSupplierForEdit}
+      />
+
+      {/* LOT EDIT MODAL */}
+      <LotEditModal
+        isOpen={isLotEditModalOpen}
+        onClose={() => {
+          setIsLotEditModalOpen(false);
+          setSelectedLotForEdit(null);
+        }}
+        lot={selectedLotForEdit}
       />
 
     </div>

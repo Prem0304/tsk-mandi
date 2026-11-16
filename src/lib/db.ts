@@ -567,6 +567,95 @@ class DatabaseService {
     this.saveState();
   }
 
+  public updatePurchaseLine(
+    lineId: string,
+    updates: {
+      cratesPurchased?: number;
+      pricePerCrate?: number;
+      cratesWasted?: number;
+      categoryId?: string;
+    }
+  ) {
+    const lineIndex = this.state.purchaseLines.findIndex(l => l.id === lineId);
+    if (lineIndex < 0) {
+      throw new Error(`Lot not found: ${lineId}`);
+    }
+
+    const lot = this.state.purchaseLines[lineIndex];
+    const oldLot = { ...lot };
+
+    // Calculate how many crates were already sold from this lot
+    const soldFromLot = this.state.sales
+      .flatMap(s => s.allocations || [])
+      .filter(a => a.lotId === lineId)
+      .reduce((sum, a) => sum + (a.crates || 0), 0);
+
+    const newPurchased = updates.cratesPurchased !== undefined ? updates.cratesPurchased : lot.cratesPurchased;
+    const newWasted = updates.cratesWasted !== undefined ? updates.cratesWasted : (lot.cratesWasted || 0);
+
+    if (newPurchased < soldFromLot) {
+      throw new Error(`Cannot reduce crates below ${soldFromLot} crates because they have already been sold to customers!`);
+    }
+
+    lot.cratesPurchased = newPurchased;
+    lot.cratesWasted = newWasted;
+    lot.cratesRemaining = Math.max(0, newPurchased - soldFromLot - newWasted);
+
+    if (updates.pricePerCrate !== undefined) {
+      lot.pricePerCrate = updates.pricePerCrate;
+      lot.effectiveCostPerCrate = updates.pricePerCrate + (lot.transportShare || 0);
+      lot.lineTotal = lot.cratesPurchased * updates.pricePerCrate;
+    }
+
+    if (updates.categoryId !== undefined) {
+      lot.categoryId = updates.categoryId;
+    }
+
+    // Sync with parent Purchase
+    const parentPurchase = this.state.purchases.find(p => p.id === lot.purchaseId);
+    if (parentPurchase) {
+      const parentLineIndex = parentPurchase.lines.findIndex(pl => pl.id === lineId);
+      if (parentLineIndex >= 0) {
+        parentPurchase.lines[parentLineIndex] = { ...lot };
+      }
+      parentPurchase.subtotalAmount = parentPurchase.lines.reduce((s, l) => s + (l.cratesPurchased * l.pricePerCrate), 0);
+      parentPurchase.netAmount = parentPurchase.subtotalAmount + (parentPurchase.transportPaidBy === 'supplier_bill' ? parentPurchase.transportCharge : 0);
+      parentPurchase.totalCrates = parentPurchase.lines.reduce((s, l) => s + l.cratesPurchased, 0);
+
+      // Sync filled crates movement for this purchase
+      const cmInIndex = this.state.crateMovements.findIndex(cm => cm.id === `cm-pur-in-${parentPurchase.id}-${lot.categoryId}`);
+      if (cmInIndex >= 0) {
+        this.state.crateMovements[cmInIndex].qtyIn = parentPurchase.lines
+          .filter(l => l.categoryId === lot.categoryId)
+          .reduce((s, l) => s + l.cratesPurchased, 0);
+      }
+    }
+
+    // Update allocations linked to this lot if cost changed
+    if (updates.pricePerCrate !== undefined) {
+      for (const sale of this.state.sales) {
+        for (const alloc of sale.allocations || []) {
+          if (alloc.lotId === lineId) {
+            alloc.costAmount = alloc.crates * lot.effectiveCostPerCrate;
+            alloc.bookedProfit = alloc.saleAmount - alloc.costAmount;
+          }
+        }
+      }
+    }
+
+    this.logAudit(
+      'update',
+      'purchase_line',
+      lineId,
+      `Updated Lot ${lot.lotNo}: ${lot.cratesPurchased} crates @ ₹${lot.pricePerCrate} (Cost: ₹${lot.effectiveCostPerCrate})`,
+      oldLot,
+      lot
+    );
+
+    this.saveState();
+    return lot;
+  }
+
   // --- SALES (STOCK OUT & ALLOCATION) ---
   public recordSale(sale: Sale, paymentNowMode?: string, paymentNowRef?: string) {
     // 1. Verify available stock per category strictly! NO negative stock allowed!

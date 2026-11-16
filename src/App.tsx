@@ -31,6 +31,7 @@ import { CashBookView } from './components/cashbook/CashBookView';
 import { ReportsView } from './components/reports/ReportsView';
 import { SettingsView } from './components/settings/SettingsView';
 import { AuditLogView } from './components/audit/AuditLogView';
+import { PurchasesView } from './components/purchases/PurchasesView';
 
 // Modals
 import { SaleEntryModal } from './components/sales/SaleEntryModal';
@@ -182,18 +183,7 @@ export const App: React.FC = () => {
 
           {activeTab === 'purchase' && (
             role === 'owner' ? (
-              <div className="p-4">
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4 max-w-md mx-auto my-8">
-                  <h3 className="text-lg font-bold text-slate-900">Stock Inward Purchase</h3>
-                  <p className="text-xs text-slate-500">Record fresh crate arrivals, transport charges, and create stock lots</p>
-                  <button
-                    onClick={() => setIsPurchaseModalOpen(true)}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl shadow-lg active:scale-95 transition-all"
-                  >
-                    Open Purchase Entry Modal
-                  </button>
-                </div>
-              </div>
+              <PurchasesView onOpenNewPurchase={() => setIsPurchaseModalOpen(true)} />
             ) : (
               <div className="p-6 max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
